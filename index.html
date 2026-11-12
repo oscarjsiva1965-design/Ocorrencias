@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ocorrências de Terminal</title>
+<meta name="theme-color" content="#0A3D7A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ocorrências">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A3D7A; --navy-ink:#ffffff;
+  --bg:#EEF2F7; --surface:#ffffff; --surface-2:#F6F8FB;
+  --ink:#16202C; --muted:#5A6676; --line:#D3DAE4;
+  --amber:#F2B705; --sign:#1C232D; --sign-ink:#FFC21A; --sign-dim:#6B5A22;
+  --ok:#1E7A46; --err:#B42318;
+  --focus:#2F6FD1;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --navy:#0F4C96; --bg:#10161E; --surface:#18212C; --surface-2:#1E2935;
+    --ink:#E6ECF3; --muted:#9AA7B6; --line:#2C3A4A; --sign:#0C1117;
+    --ok:#4CC27F; --err:#FF7A6E; --focus:#7FB0FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --navy:#0F4C96; --bg:#10161E; --surface:#18212C; --surface-2:#1E2935;
+  --ink:#E6ECF3; --muted:#9AA7B6; --line:#2C3A4A; --sign:#0C1117;
+  --ok:#4CC27F; --err:#FF7A6E; --focus:#7FB0FF; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--navy);color:var(--navy-ink)}
+.top-in{max-width:880px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.top h1{font:700 22px/1.1 "Barlow Condensed","Arial Narrow",sans-serif;margin:0;letter-spacing:.01em;flex:1}
+.top h1 small{display:block;font:500 13px/1.3 "Barlow",sans-serif;opacity:.8}
+nav.tabs{display:flex;gap:4px;background:rgba(255,255,255,.12);padding:4px;border-radius:10px}
+nav.tabs a{color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:7px 12px;border-radius:7px;white-space:nowrap}
+@media (max-width:480px){nav.tabs{width:100%;overflow-x:auto}nav.tabs a{flex:1;text-align:center;padding:7px 6px;font-size:14px}}
+nav.tabs a[aria-current="page"]{background:#fff;color:var(--navy)}
+main{max-width:880px;margin:0 auto;padding:20px 18px 60px}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 18px 20px;margin-bottom:18px}
+h2{font:700 20px/1.2 "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 4px}
+.hint{color:var(--muted);font-size:14px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 16px}
+.full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:14px}
+.req::after{content:" *";color:var(--err)}
+input,select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;min-height:44px;width:100%}
+textarea{min-height:90px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,.chip input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend{font-weight:600;font-size:14px;padding:0;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;width:1px;height:1px}
+.chip span{display:inline-block;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);font-size:14px;font-weight:500;cursor:pointer;user-select:none}
+.chip input:checked+span{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* Letreiro: o seletor de tipo de ocorrência */
+.letreiro{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;background:var(--sign);padding:8px;border-radius:12px;margin-bottom:18px}
+.letreiro button{all:unset;cursor:pointer;padding:14px 12px;border-radius:7px;font:700 19px/1.1 "Barlow Condensed","Arial Narrow",sans-serif;color:var(--sign-dim);text-align:center;letter-spacing:.02em;
+  background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.025) 3px 4px)}
+.letreiro button[aria-pressed="true"]{color:var(--sign-ink);text-shadow:0 0 8px rgba(255,194,26,.55);background-color:#000}
+.letreiro button:focus-visible{outline:3px solid var(--sign-ink);outline-offset:-3px}
+.letreiro button{display:flex;align-items:center;justify-content:center;min-height:62px;font-size:21px}
+.resumo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.resumo-dados{display:flex;gap:8px 22px;flex-wrap:wrap;flex:1}
+.resumo-dados div{display:flex;flex-direction:column}
+.resumo-dados span{color:var(--muted);font-size:12px}
+.resumo-dados strong{font-size:17px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+button.btn{font:600 16px/1 "Barlow",sans-serif;border-radius:9px;padding:13px 20px;min-height:46px;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:#fff}
+button.btn.sec{background:transparent;color:var(--ink);border-color:var(--line)}
+button.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:14px;font-weight:600}
+.status.ok{color:var(--ok)} .status.err{color:var(--err)}
+.notice{background:var(--surface-2);border-left:4px solid var(--amber);padding:10px 12px;border-radius:6px;font-size:14px;margin-bottom:16px}
+[hidden]{display:none!important}
+
+/* Registros */
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.count{color:var(--muted);font-size:14px;margin:0 0 10px}
+.rec{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surface)}
+.rec-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font:700 13px/1 "Barlow Condensed",sans-serif;background:var(--sign);color:var(--sign-ink);padding:5px 8px;border-radius:5px;letter-spacing:.03em}
+.rec-h strong{font-size:16px}
+.rec-h .when{color:var(--muted);font-size:14px;margin-left:auto}
+.rec dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 16px;margin:10px 0 0;font-size:14px}
+.rec dt{color:var(--muted);font-size:12px}
+.rec dd{margin:0 0 4px;overflow-wrap:anywhere}
+.rec .del{margin-top:8px;font:600 13px "Barlow",sans-serif;background:none;border:0;color:var(--err);cursor:pointer;padding:6px 0}
+.rec .edit{margin-top:8px;font:600 13px "Barlow",sans-serif;background:none;border:0;color:var(--focus);cursor:pointer;padding:6px 0}
+.rec .acoes{display:flex;gap:20px}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:18px;width:min(760px,94vw);max-height:90vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.chipbtn{font:500 14px "Barlow",sans-serif;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--ink);cursor:pointer;min-height:38px}
+.chipbtn[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;background:var(--sign);padding:8px;border-radius:12px;margin-bottom:18px}
+.tot div{padding:12px;border-radius:7px;background:#000;color:var(--sign-ink)}
+.tot b{display:block;font:700 36px/1 "Barlow Condensed",sans-serif;text-shadow:0 0 8px rgba(255,194,26,.45)}
+.tot span{font-size:13px;color:#D9C48A}
+.tot .geral{background:#0A2A52;color:#fff}.tot .geral b{color:#fff;text-shadow:none}.tot .geral span{color:#C8D6EA}
+.bloco{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.bloco h3{font:700 19px/1.2 "Barlow Condensed",sans-serif;margin:0 0 12px;display:flex;justify-content:space-between;gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font:700 26px/1.1 "Barlow Condensed",sans-serif}
+.kpi span{font-size:12px;color:var(--muted)}
+.barras{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.bg h4{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600}
+.br{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;font-size:13px;margin-bottom:7px}
+.br .lb{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br .ct{text-align:right;font-weight:600}
+.br .bar{grid-column:1/-1;height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.br .bar i{display:block;height:100%;background:var(--amber)}
+.mais{font-size:12px;color:var(--muted)}
+.sync{font:600 13px/1.2 "Barlow",sans-serif;border:0;border-radius:999px;padding:7px 12px;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;display:inline-flex;align-items:center;gap:7px;min-height:34px}
+.sync::before{content:"";width:9px;height:9px;border-radius:50%;background:#9AA7B6;flex:none}
+.sync.ok::before{background:#4CC27F}.sync.pend::before{background:var(--amber)}.sync.off::before{background:#FF7A6E}.sync.run::before{background:#7FB0FF}
+.instalar{font:600 14px/1 "Barlow",sans-serif;background:var(--amber);color:#1C232D;border:0;border-radius:9px;padding:9px 14px;min-height:38px;cursor:pointer}
+.pend-tag{font:600 12px/1 "Barlow",sans-serif;background:var(--amber);color:#1C232D;padding:4px 7px;border-radius:5px}
+.sair{font:700 15px/1 "Barlow",sans-serif;background:#C62828;color:#fff;border:2px solid #fff;border-radius:9px;padding:9px 18px;min-height:40px;cursor:pointer}
+.sair:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.data-hoje{margin:0 0 16px}
+.sub{font:700 18px/1.2 "Barlow Condensed",sans-serif;margin:20px 0 10px}
+.cad-t{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface-2)}
+.cad-t summary{cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.cad-qt{color:var(--muted);font-weight:400;font-size:14px}
+.cad-body{padding:0 14px 14px;display:grid;gap:10px}
+.cad-g{border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:8px}
+.cad-g input,.cad-g textarea,.cad-body>label input{background:var(--surface)}
+.opc{font-weight:400;color:var(--muted)}
+.lnk-del{font:600 13px "Barlow",sans-serif;background:none;border:0;color:var(--err);cursor:pointer;padding:6px 0;justify-self:start}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <h1>Ocorrências de Terminal <small>Folha de ocorrência operacional</small></h1>
+    <nav class="tabs" aria-label="Seções">
+      <a href="#registrar" id="nav-registrar">Registrar</a>
+      <a href="#registros" id="nav-registros">Registros</a>
+      <a href="#estatisticas" id="nav-estatisticas">Estatísticas</a>
+      <a href="#admin" id="nav-admin">Admin</a>
+    </nav>
+    <button type="button" id="sync" class="sync" title="Tocar para enviar agora">Iniciando…</button>
+    <button type="button" id="btn-instalar" class="instalar" hidden>Instalar app</button>
+    <button type="button" id="btn-sair" class="sair" hidden>Sair</button>
+  </div>
+</header>
+
+<main>
+  <div id="db-note" class="notice" hidden></div>
+
+  <!-- ===== REGISTRAR ===== -->
+  <div id="view-registrar">
+    <section class="panel" aria-labelledby="h-plantao">
+      <h2 id="h-plantao">Dados do plantão</h2>
+      <div id="plantao-resumo" class="resumo" hidden>
+        <div class="resumo-dados" id="resumo-dados"></div>
+        <button type="button" class="btn sec" id="btn-alterar-plantao">Alterar</button>
+      </div>
+      <div id="plantao-edit">
+      <p class="hint">Cada agente abre o plantão com a própria matrícula. Ao sair do app o plantão é encerrado, e quem render precisa abrir de novo com a sua matrícula.</p>
+      <div class="resumo-dados data-hoje" id="plantao-hoje"></div>
+      <div class="grid">
+        <label class="f"><span class="req">Matrícula</span><input id="c-matricula" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></label>
+        <label class="f"><span class="req">Terminal</span><select id="c-terminal"></select></label>
+        <fieldset class="full"><legend class="req">Condições do tempo</legend><div class="chips" id="c-tempo"></div></fieldset>
+      </div>
+      <div class="actions"><button type="button" class="btn" id="btn-confirmar-plantao">Abrir plantão</button><span class="status" id="plantao-status" role="status" aria-live="polite"></span></div>
+      </div>
+    </section>
+
+    <div class="letreiro" role="group" aria-label="Tipo de ocorrência" id="letreiro"></div>
+
+    <section class="panel" aria-labelledby="h-form">
+      <h2 id="h-form"></h2>
+      <p class="hint" id="form-hint"></p>
+      <form id="form" novalidate>
+        <div class="grid" id="campos"></div>
+        <div class="actions">
+          <button type="submit" class="btn" id="btn-salvar">Registrar ocorrência</button>
+          <button type="button" class="btn sec" id="btn-limpar">Limpar campos</button>
+          <span class="status" id="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ===== REGISTROS ===== -->
+  <div id="view-registros" hidden>
+    <section class="panel">
+      <h2>Registros</h2>
+      <p class="hint">Ocorrências de todos os agentes, das mais recentes para as mais antigas. As que ainda não foram enviadas aparecem marcadas.</p>
+      <div class="filters">
+        <label class="f">Tipo<select id="f-tipo"><option value="">Todos</option></select></label>
+        <label class="f">Terminal<select id="f-terminal"><option value="">Todos</option></select></label>
+        <label class="f">De<input type="date" id="f-de"></label>
+        <label class="f">Até<input type="date" id="f-ate"></label>
+      </div>
+      <div class="actions" style="margin:0 0 14px">
+        <button type="button" class="btn sec" id="btn-csv">Baixar planilha (CSV)</button>
+        <span class="status" id="csv-status" role="status" aria-live="polite"></span>
+      </div>
+      <p class="count" id="count"></p>
+      <div id="lista"></div>
+    </section>
+  </div>
+
+  <!-- ===== ESTATÍSTICAS ===== -->
+  <div id="view-estatisticas" hidden>
+    <section class="panel">
+      <h2>Estatísticas</h2>
+      <p class="hint">Somas de cada formulário no período e terminal escolhidos.</p>
+      <div class="filters">
+        <label class="f">Terminal<select id="e-terminal"><option value="">Todos</option></select></label>
+        <label class="f">De<input type="date" id="e-de"></label>
+        <label class="f">Até<input type="date" id="e-ate"></label>
+      </div>
+      <div class="chips" id="e-rapido" style="margin-bottom:16px">
+        <button type="button" class="chipbtn" data-p="hoje">Hoje</button>
+        <button type="button" class="chipbtn" data-p="7">Últimos 7 dias</button>
+        <button type="button" class="chipbtn" data-p="mes">Este mês</button>
+        <button type="button" class="chipbtn" data-p="tudo">Tudo</button>
+      </div>
+      <div id="estat"></div>
+    </section>
+  </div>
+
+  <!-- ===== ADMINISTRAÇÃO ===== -->
+  <div id="view-admin" hidden>
+    <section class="panel">
+      <h2>Administração</h2>
+      <div id="adm-login">
+        <p class="hint">Área do responsável pelo app: correção e exclusão de registros e cadastro de terminais, linhas e empresas. Digite a chave de administrador definida na planilha. Precisa de internet.</p>
+        <div class="grid">
+          <label class="f">Chave de administrador<input type="password" id="adm-chave" autocomplete="current-password"></label>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="adm-entrar">Entrar como administrador</button>
+          <span class="status" id="adm-status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+      <div id="adm-area" hidden>
+        <p class="hint">Você está no modo administrador neste aparelho. Os botões de editar e apagar aparecem na aba Registros. Registros antigos não mudam quando você renomeia ou remove um terminal.</p>
+        <div class="actions" style="margin:0 0 6px"><button type="button" class="btn sec" id="adm-sair">Sair do modo administrador</button></div>
+        <div id="cad-aviso" class="notice" hidden></div>
+        <div id="cad-conteudo">
+          <h3 class="sub">Terminais e linhas</h3>
+          <div id="cad-terminais"></div>
+          <button type="button" class="btn sec" id="cad-add-term">Adicionar terminal</button>
+          <h3 class="sub">Empresas</h3>
+          <label class="f">Uma empresa por linha<textarea id="cad-empresas" rows="8"></textarea></label>
+          <div class="actions">
+            <button type="button" class="btn" id="cad-salvar">Salvar cadastros</button>
+            <button type="button" class="btn sec" id="cad-descartar">Descartar alterações</button>
+            <span class="status" id="cad-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-titulo">
+  <form id="dlg-form" novalidate>
+    <h2 id="dlg-titulo">Editar registro</h2>
+    <p class="hint">As alterações substituem o registro original.</p>
+    <div class="grid" id="dlg-campos"></div>
+    <div class="actions">
+      <button type="submit" class="btn">Salvar alterações</button>
+      <button type="button" class="btn sec" id="dlg-cancelar">Cancelar</button>
+      <span class="status" id="dlg-status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+</dialog>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO: cole aqui a URL do App da Web do Google Apps Script
+   (termina em /exec). Veja o GUIA.
+   ============================================================ */
+const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
+
+/* ---------- Dados dos formulários ---------- */
+const TERMINAIS=["Barão Geraldo","Campo Grande","Central","Shopping Iguatemi","Itajaí","Mercado","Metropolitano","Ouro Verde","Padre Anchieta","Shopping Dom Pedro","Vida Nova","Vila União","Satélite Íris","Campos Elíseos","Santa Lúcia","BRT Mercado"];
+const EMPRESAS=["VB1","VB3","CAMPIBUS","PADOVA","ITAJAI","ONICAMP","COOPERATAS","COTALCAMP","ALTERCAMP","COOPCAMP"];
+const TEMPO=["Ensolarado","Nublado","Chuvoso","Tempo bom"];
+
+const LINHAS={
+"Central":[["",["115 - Adhemar de Barros","120 - Terminal Ouro Verde","136 - Terminal Central","163 - Jardim Campos Elíseos","164 - Parque Tropical","186 - Jardim Santa Maria / Semi Expressa","189 - Jardim Columbia","191 - Jardim Fernanda","194 - Jardim Itaguaçu","195 - Vila Palmeiras","214 - Terminal Itajaí / Semi Expressa","231 - Satélite Íris I","380 - Cambuí / Norte Sul","401 - Chácaras São Martinho","402 - Parque da Figueira / Swiss Park","404 - Jardim Maria Rosa","405 - Jardim Petrópolis","411 - Jardim do Lago II","412 - Parque Eldorado","414 - Parque Oziel","415 - Gleba B","422 - Jardim Nova América","429 - Swiss Park","430 - Swiss Park","431 - Reforma Agrária","432 - Saltinho","433 - Mora das Bandeiras","434 - Nossa Senhora de Lourdes","BRT10 - Terminal Ouro Verde","BRT11 - Terminal Vida Nova","BRT12 - Terminal Campos Elíseos"]]],
+"Campo Grande":[["",["123 - Ter. Ouro Verde","200 - Jd Novo Maracanã","201 - Jd Santa Rosa","202 - Pq Valença II","203 - Campina Grande","204 - Pq Floresta","205 - Ter. Ouro Verde","206 - Santa Clara","207 - Jd Novo Mundo","208 - Jd Maracanã","209 - Chácara Cruzeiro do Sul","209.1 - Chácara Cruzeiro do Sul / Colina Verde","210 - Ter. Barão Geraldo","211 - Shopping Iguatemi","215 - Jd Bassoli","216 - Res. Colinas das Nascentes","217 - Res. São Luiz","218 - Ter. Itajaí - Semi Expressa","220 - Cambuí","BRT20 - Campo Grande (parador)","BRT21 - Campo Grande (Semi Expresso)"]]],
+"Barão Geraldo":[["",["134 - Ter. Ouro Verde","210 - Ter. Campo Grande","269 - Ter. Padre Anchieta","300 - Souzas","314 - Ter. Padre Anchieta","319 - Pq Cidade","320 - Real Parque II","321 - Centro Médico","322 - Village Campinas","323 - Vila Holândia","324 - Real Parque","325 - Vila Santa Izabel","328 - Cidade Judiciária","329 - Cidade Judiciária","329.1 - Cidade Judiciária","331 - Rodoviária","333 - Ter. Barão Geraldo","336 - Hospital das Clínicas","337 - Unicamp","338 - Shopping Iguatemi"]]],
+"Shopping Iguatemi":[["",["125 - Terminal Ouro Verde","211 - Terminal Campo Grande","249 - Jardim Flamboyant / Pq dos Eucaliptos","260 - Padre Anchieta","338 - Terminal Barão Geraldo","362 - Parque Brasília","381 - Shopping Dom Pedro","383 - Leroy Merlin via Planalto","383.1 - Leroy Merlin","384 - Entreverdes","385 - Terminal Metropolitano"]]],
+"Mercado":[
+ ["Terminal Mercado",["241 - Vila Padre Manoel da Nóbrega","242 - Jardim Miranda","250 - Boa Vista","251 - Parque Fazendinha","252 - Parque São Jorge","254 - Terminal Padre Anchieta","255 - Parque Via Norte","256 - Parque Fazendinha Semi Expressa","257 - Parque São Jorge Semi Expressa","261 - Vila Reggio","263 - Vila Padre Anchieta","265 - Padre Anchieta","265.1 - Padre Anchieta","271 - Jardim Pacaembu","273 - Jardim Eulina","311 - Jardim Santa Mônica","312 - Vila Esperança","352 - Bairro Bananal","355 - Vila Gênesis","BRT10 - Terminal Ouro Verde","BRT11 - Terminal Vida Nova","BRT12 - Terminal Campos Elíseos","BRT20 - Terminal Campo Grande","BRT21 - Terminal Campo Grande (Semi-expressa)","BRT25 - Terminal Satélite Íris","BRT26 - Terminal Satélite Íris (Semi-expressa)"]],
+ ["Terminal Mercado III",["171 - Campinas Shopping / Shopping Dom Pedro","173 - Jardim São Vicente / Parque Itália","240 - Jardim Garcia / Shopping Dom Pedro","244 - Vila Teixeira / Shopping Dom Pedro","249 - Jardim Flamboyant / Parque dos Eucaliptos","348 - Vila Marieta / Cidade Judiciária","377 - Vila Marieta / Shopping Dom Pedro","382 - Cambuí / Campinas Shopping"]],
+ ["Corujão",["179 - Jardim São Domingos","199 - Vida Nova","289 - Itajaí IV","299 - Nova Aparecida","309 - Parque Cidade","339 - Cidade Universitária","399 - Joaquim Egídio","489 - Parque Jambeiro"]]],
+"Metropolitano":[["",["132 - Vida Nova","193 - Aeroporto de Viracopos","213 - Terminal Itajaí","331 - Terminal Barão Geraldo","332 - Hospital das Clínicas","349 - Vila Formosa","357 - PUCC I","362 - Shopping Iguatemi","366 - Vila Orozimbo Maia","385 - Shopping Iguatemi","386 - Cambuí","396 - Sousas","398 - Joaquim Egídio","408 - Parque Jambeiro","409 - Parque Jambeiro","502 - Circular Centro"]]],
+"Ouro Verde":[["",["101 - Parque Universitário / Terminal Ouro Verde","102 - Recanto do Sol / Terminal Ouro Verde","103 - Dic II e III","104 - Dic IV","105 - Cohab I","106 - Cohab II","107 - Jardim Melina","108 - Jardim Aeronave I","109 - Dic VI – Vila Aeroporto","110 - Adhemar de Barros","111 - Jardim Aeronave I","112 - Jardim Planalto I","113 - Jardim Planalto II","116 - Terminal Ouro Verde / Shopping Dom Pedro","118 - Terminal Ouro Verde / Cambuí","119 - Terminal Ouro Verde / Shopping Dom Pedro","120 - Terminal Ouro Verde / Terminal Central","121 - Terminal Ouro Verde / Corredor Central","122 - Terminal Vida Nova / Shopping Campinas via Terminal Ouro Verde","123 - Terminal Ouro Verde / Terminal Campo Grande","125 - Terminal Ouro Verde / Shopping Iguatemi","128 - Terminal Ouro Verde / Terminal Vida Nova (via São José, Res. Rosário, Jd. Marajó)","129 - Vila Park / Term. Ouro Verde","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana e feriados)","132 - Terminal Vida Nova / Rodoviária – via Terminal Ouro Verde","134 - Terminal Ouro Verde / Terminal Barão Geraldo","137 - Term. Vida Nova / Term. Ouro Verde","138 - Term. Ouro Verde / Recanto do Sol","180 - Terminal Ouro Verde / Jardim Santo Antônio","196 - Terminal Ouro Verde / Aeroporto de Viracopos (via Dic IV)","198 - Terminal Ouro Verde / Aeroporto de Viracopos","205 - Terminal Ouro Verde / Terminal Campo Grande","239 - Terminal Ouro Verde / PUCC II","BRT10 - Terminal Central"]]],
+"Padre Anchieta":[["",["254 - Parque Universal","260 - Nova Aparecida / Shopping Iguatemi","261 - Padre Anchieta","263 - Terminal Padre Anchieta","264 - Vila Padre Anchieta","265 - Padre Anchieta","266 - Parque São Jorge / Hospital das Clínicas","269 - Terminal Padre Anchieta / Terminal Barão Geraldo","314 - Terminal Padre Anchieta / Terminal Barão Geraldo"]]],
+"Shopping Dom Pedro":[["",["116 - Terminal Ouro Verde","119 - Terminal Ouro Verde","171 - Parque Industrial / Shopping Campinas","240 - Jardim Garcia","244 - Vila Teixeira","371 - Parque Prado","377 - Vila Marieta","381 - Shopping Iguatemi"]]],
+"Vida Nova":[["",["122 - Terminal Vida Nova / Shopping Campinas (via Terminal Ouro Verde)","126 - Vida Nova I e II","126.1 - Vida Nova I, II e Vila Vitória / Terminal Vida Nova","127 - Vila Vitória / Terminal Vida Nova","127.1 - Vila Vitória, Estrada Friburgo / Terminal Vida Nova","128 - Terminal Vida Nova / Terminal Ouro Verde (via Marajó, Res. São José, Res. Rosário)","129 - Terminal Vida Nova / Terminal Ouro Verde (via Res. Porto Seguro)","130 - Terminal Vida Nova / Terminal Central (Semi Expressa)","131 - Terminal Vida Nova / Corredor Central","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana)","132 - Terminal Vida Nova / Rodoviária (via Terminal Ouro Verde)","136 - Terminal Vida Nova / Rodoviária","137 - Term. Vida Nova / Term. Ouro Verde","BRT11 - Terminal Vida Nova"]]],
+"Vila União":[["",["140 - Terminal Vila União / Terminal Central","150 - Vila União I / Terminal Vila União","152 - Vila União III / Terminal Vila União","153 - Terminal Vila União / Rodoviária","154 - Terminal Vila União / Corredor Central","155 - Term. Vila União / Term. Campos Elíseos","156 - Term. Vila União / Term. Campos Elíseos","158 - Term. Vila União / Term. Santa Lúcia","163 - Terminal Central / Terminal Vila União","164 - Terminal Vila União / Terminal Central (via Parque Tropical)","166 - Term. Vila União / Term. Campos Elíseos","167 - Term. Vila União / Term. Campos Elíseos"]]],
+"Satélite Íris":[["",["226 - Residencial Sirius","227 - Jd. Florence II / Term. Sat. Íris","231 - Satélite Íris I","232 - Sat. Íris IV / Term. Satélite Íris","233 - Jd. Florence / Term. Satélite Íris","234 - Sat. Íris III / Term. Satélite Íris","235 - Residencial Sirius / Term. Satélite Íris","243 - Princesa D’Oeste","246 - Bela Aliança","BRT25 - Satélite Íris (Parador)","BRT26 - Satélite Íris (Semi Expressa)"]]],
+"Itajaí":[["",["212 - Corredor Central","213 - Rodoviária","214 - Ter. Central Semi Expressa","218 - Ter. Campo Grande Semi Expressa","219 - Ter. Itajaí / Circular Centro"]]],
+"Campos Elíseos":[["",["140 - Vila União","144 - Jd Capivari","155 - Ter. Vila União","156 - Ter. Vila União","165 - Jd Pauliceia","166 - Ter. Vila União","167 - Pq Tropical","BRT12 - Corredor Central","406 - Jd Maria Rosa"]]],
+"Santa Lúcia":[["",["143 - Jd Santa Terezinha","150 - Res. Vila União I","152 - Res. Vila União II","158 - Ter. Vila União","BRT12 - Corredor Central"]]]
+};
+
+/* Tipos de campo: text, num, date, time, select, radio, checks, area, linha (lista do terminal com texto livre), linhaSel (lista obrigatória do terminal) */
+const TIPOS={
+ troca:{nome:"Trocas realizadas",tag:"TROCA",dica:"Registre cada troca de veículo feita no terminal.",campos:[
+  {k:"empresa",l:"Empresa",t:"select",o:EMPRESAS,r:1},
+  {k:"data",l:"Data",t:"date",r:1},
+  {k:"linha",l:"Linha",t:"linha",r:1},
+  {k:"horario",l:"Horário",t:"time",r:1},
+  {k:"saiPrefixo",l:"Sai prefixo",t:"num",r:1},
+  {k:"entraPrefixo",l:"Entra prefixo",t:"num",r:1},
+  {k:"origem",l:"Origem do carro",t:"text"},
+  {k:"local",l:"Local da troca",t:"text"},
+  {k:"motivo",l:"Motivo",t:"checks",o:["Espelho retrovisor inoperante","Porta quebrada","Pane elétrica","Solicitação de garagem","Temperatura elevada","Vazamento de água","Vazamento de ar","Veículo sem rendimento","Outra"],r:1}
+ ]},
+ reserva:{nome:"Veículos reservas",tag:"RESERVA",dica:"Registre a chegada e a saída de veículos reservas no terminal.",campos:[
+  {k:"empresa",l:"Empresa",t:"select",o:EMPRESAS,r:1},
+  {k:"data",l:"Data",t:"date",r:1},
+  {k:"prefixo",l:"Prefixo",t:"num",r:1},
+  {k:"equipe",l:"Equipe",t:"radio",o:["Sim","Não"]},
+  {k:"chegada",l:"Hora da chegada",t:"time"},
+  {k:"saida",l:"Hora da saída",t:"time"},
+  {k:"alteracao",l:"Alteração operacional",t:"text",full:1}
+ ]},
+ irregular:{nome:"Horários irregulares",tag:"HORÁRIO",dica:"A diferença em minutos é calculada a partir dos dois horários. Ajuste se precisar.",campos:[
+  {k:"empresa",l:"Empresa",t:"select",o:EMPRESAS,r:1},
+  {k:"data",l:"Data",t:"date",r:1},
+  {k:"linha",l:"Linha",t:"linha",r:1},
+  {k:"prefixo",l:"Prefixo",t:"num",r:1},
+  {k:"programado",l:"Horário programado",t:"time",r:1},
+  {k:"realizado",l:"Horário realizado",t:"time",r:1},
+  {k:"diferenca",l:"Diferença em minutos",t:"num"},
+  {k:"aitp",l:"AITP",t:"radio",o:["Sim","Não"],r:1},
+  {k:"aitpNumero",l:"Número do AITP",t:"aitp",r:1,quando:v=>v.aitp==="Sim"},
+  {k:"motivo",l:"Motivo",t:"checks",o:["Demanda de passageiros","Trânsito CxB (justificar)","Trânsito BxC (justificar)","Rendição","Veículo sem rendimento","Motorista novo na linha","Quebra no viário","Embarque de cadeirante","Sem justificativa","Pane elétrica (justificar)","Outra"],r:1},
+  {k:"justificativa",l:"Justificativa",t:"text",full:1,quando:v=>(v.motivo||[]).some(m=>m.includes("justificar"))}
+ ]},
+ alteracao:{nome:"Viagens não realizadas",tag:"NÃO REALIZADA",dica:"Faltas e viagens extras. As linhas mostradas são as do terminal do plantão.",campos:[
+  {k:"linha",l:"Linha",t:"linhaSel",r:1},
+  {k:"empresa",l:"Empresa",t:"select",o:EMPRESAS,r:1},
+  {k:"data",l:"Data",t:"date",r:1},
+  {k:"horario",l:"Horário",t:"time",r:1},
+  {k:"prefixo",l:"Prefixo",t:"num"},
+  {k:"tipoViagem",l:"Tipo de viagem",t:"radio",o:["Falta","Extra autorizada","Extra não autorizada"],r:1},
+  {k:"aitp",l:"AITP",t:"radio",o:["Sim","Não"],r:1},
+  {k:"aitpNumero",l:"Número do AITP",t:"aitp",r:1,quando:v=>v.aitp==="Sim"},
+  {k:"motivo",l:"Motivo",t:"area"}
+ ]},
+ outra:{nome:"Outras ocorrências",tag:"OUTRA",dica:"Qualquer ocorrência que não se encaixe nas outras folhas.",campos:[
+  {k:"data",l:"Data da ocorrência",t:"date",r:1},
+  {k:"hora",l:"Hora da ocorrência",t:"time",r:1},
+  {k:"descricao",l:"Descrição da ocorrência",t:"area",r:1}
+ ]}
+};
+const ORDEM=["alteracao","irregular","troca","reserva","outra"];
+
+/* ---------- Utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hoje=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fmtData=s=>s&&/^\d{4}-\d{2}-\d{2}$/.test(s)?s.split("-").reverse().join("/"):(s||"");
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+
+/* ---------- Plantão ---------- */
+$("#c-terminal").innerHTML='<option value="">Selecione…</option>'+TERMINAIS.map(t=>`<option>${esc(t)}</option>`).join("");
+$("#c-tempo").innerHTML=TEMPO.map(t=>`<label class="chip"><input type="radio" name="c-tempo" value="${esc(t)}"><span>${esc(t)}</span></label>`).join("");
+/* O plantão vive só enquanto o app está aberto: matrícula e tempo não ficam guardados no aparelho. Só o terminal é lembrado. */
+try{localStorage.removeItem("plantao");localStorage.removeItem("plantaoConfirmado")}catch(e){}
+let plantaoAberto=false, plantaoAbertoEm=null;
+const termAparelho=store.get("terminalAparelho");
+if(termAparelho&&TERMINAIS.includes(termAparelho))$("#c-terminal").value=termAparelho;
+const DIAS=["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+const fmtDia=d=>String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
+const blocoDados=pares=>pares.map(([a,b])=>`<div><span>${esc(a)}</span><strong>${esc(b)}</strong></div>`).join("");
+let diaMostrado="";
+function mostrarHoje(){
+  const d=new Date(),k=fmtDia(d);if(k===diaMostrado)return;diaMostrado=k;
+  $("#plantao-hoje").innerHTML=blocoDados([["Data",k],["Dia da semana",DIAS[d.getDay()]]]);
+  if(plantaoAberto)mostrarResumo(true);
+}
+mostrarHoje();setInterval(mostrarHoje,20000);
+function lerPlantao(){return{matricula:$("#c-matricula").value.trim(),terminal:$("#c-terminal").value,tempo:(document.querySelector('input[name="c-tempo"]:checked')||{}).value||""}}
+function salvarPlantao(){const t=$("#c-terminal").value;if(t)store.set("terminalAparelho",t)}
+$("#c-terminal").addEventListener("change",()=>{salvarPlantao();renderForm(true)});
+function plantaoCompleto(p){return p.matricula&&/^\d+$/.test(p.matricula)&&p.terminal&&p.tempo}
+function mostrarResumo(sim){
+  const p=lerPlantao();plantaoAberto=sim;$("#btn-sair").hidden=!sim;
+  $("#plantao-resumo").hidden=!sim;$("#plantao-edit").hidden=sim;
+  if(sim){const d=new Date();$("#resumo-dados").innerHTML=blocoDados([["Data",fmtDia(d)],["Dia da semana",DIAS[d.getDay()]],["Matrícula",p.matricula],["Terminal",p.terminal],["Tempo",p.tempo]])}
+}
+$("#btn-confirmar-plantao").addEventListener("click",()=>{
+  const p=lerPlantao(),st=$("#plantao-status");st.className="status";
+  if(!plantaoCompleto(p)){st.textContent=p.matricula&&!/^\d+$/.test(p.matricula)?"A matrícula deve ter só números.":"Preencha matrícula, terminal e condições do tempo.";st.classList.add("err");return}
+  if(!plantaoAbertoEm)plantaoAbertoEm=Date.now();
+  st.textContent="";salvarPlantao();mostrarResumo(true);
+});
+$("#btn-alterar-plantao").addEventListener("click",()=>{mostrarResumo(false);$("#c-matricula").focus()});
+$("#btn-sair").addEventListener("click",()=>{
+  if(!confirm("Sair e encerrar o plantão? Quem for render terá que abrir com a própria matrícula."))return;
+  $("#c-matricula").value="";document.querySelectorAll('input[name="c-tempo"]').forEach(r=>r.checked=false);
+  plantaoAbertoEm=null;mostrarResumo(false);renderForm();
+  if(location.hash&&location.hash!=="#registrar")location.hash="#registrar";
+  window.scrollTo(0,0);$("#c-matricula").focus();
+  const st=$("#plantao-status");st.className="status ok";st.textContent="Plantão encerrado. Pronto para a próxima rendição.";
+});
+
+/* ---------- Letreiro ---------- */
+let tipoAtual=store.get("tipo");if(!TIPOS[tipoAtual])tipoAtual="troca";
+$("#letreiro").innerHTML=ORDEM.map(k=>`<button type="button" data-k="${k}" aria-pressed="false">${esc(TIPOS[k].nome)}</button>`).join("");
+$("#letreiro").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tipoAtual=b.dataset.k;store.set("tipo",tipoAtual);renderForm()});
+
+/* ---------- Formulário ---------- */
+LINHAS["BRT Mercado"]=LINHAS["Mercado"];
+function opcoesLinha(terminal){
+  const op=ls=>ls.map(l=>`<option>${esc(l)}</option>`).join(""), og=(lab,ls)=>`<optgroup label="${esc(lab)}">${op(ls)}</optgroup>`;
+  if(terminal&&LINHAS[terminal])return LINHAS[terminal].map(([n,ls])=>n?og(n,ls):op(ls)).join("");
+  return Object.keys(LINHAS).filter(t=>!(t==="BRT Mercado"&&LINHAS[t]===LINHAS["Mercado"])).map(t=>LINHAS[t].map(([n,ls])=>og(n?(n==="Corujão"?"Corujão – Mercado":n):"Terminal "+t,ls)).join("")).join("");
+}
+function campoHTML(f){
+  const id="f-"+f.k, lab=`<span class="${f.r?"req":""}">${esc(f.l)}</span>`, cls=f.full||f.t==="checks"||f.t==="area"||f.t==="radio"&&f.o.length>2?"full":"";
+  const term=$("#c-terminal").value;
+  switch(f.t){
+   case"text":return`<label class="f ${cls}" data-k="${f.k}">${lab}<input id="${id}" name="${f.k}" autocomplete="off"></label>`;
+   case"num":return`<label class="f ${cls}" data-k="${f.k}">${lab}<input id="${id}" name="${f.k}" inputmode="numeric" ${f.k==="diferenca"?'type="number"':'pattern="[0-9]*"'} autocomplete="off"></label>`;
+   case"date":return`<label class="f ${cls}" data-k="${f.k}">${lab}<input type="date" id="${id}" name="${f.k}" value="${hoje()}"></label>`;
+   case"time":return`<label class="f ${cls}" data-k="${f.k}">${lab}<input type="time" id="${id}" name="${f.k}"></label>`;
+   case"aitp":return`<label class="f" data-k="${f.k}">${lab}<input id="${id}" name="${f.k}" maxlength="10" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Ex.: A123456789"><span style="font-weight:400;font-size:12px;color:var(--muted)">1 letra e 9 números</span></label>`;
+   case"area":return`<label class="f full" data-k="${f.k}">${lab}<textarea id="${id}" name="${f.k}"></textarea></label>`;
+   case"select":return`<label class="f ${cls}" data-k="${f.k}">${lab}<select id="${id}" name="${f.k}"><option value="">Selecione…</option>${f.o.map(o=>`<option>${esc(o)}</option>`).join("")}</select></label>`;
+   case"linha":case"linhaSel":
+     return`<label class="f full" data-k="${f.k}">${lab}<select id="${id}" name="${f.k}"><option value="">${term?"Selecione a linha…":"Selecione a linha (todos os terminais)…"}</option>${opcoesLinha(term)}<option value="__outra">Outra linha (digitar)</option></select></label><label class="f full" data-txt="${f.k}" hidden>Digite a linha<input name="${f.k}__txt" autocomplete="off"></label>`;
+   case"radio":return`<fieldset class="${cls}" data-k="${f.k}"><legend class="${f.r?"req":""}">${esc(f.l)}</legend><div class="chips">${f.o.map(o=>`<label class="chip"><input type="radio" name="${f.k}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div></fieldset>`;
+   case"checks":return`<fieldset class="full" data-k="${f.k}"><legend class="${f.r?"req":""}">${esc(f.l)} <span style="font-weight:400;color:var(--muted)">(pode marcar mais de um)</span></legend><div class="chips">${f.o.map(o=>`<label class="chip"><input type="checkbox" name="${f.k}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div>
+     <label class="f" data-outro="${f.k}" hidden style="margin-top:10px">Qual outro motivo?<input name="${f.k}__outro" autocomplete="off"></label></fieldset>`;
+  }
+}
+function lerValores(){
+  const T=TIPOS[tipoAtual], form=$("#form"), v={};
+  for(const f of T.campos){
+    if(f.t==="checks"){v[f.k]=[...form.querySelectorAll(`input[name="${f.k}"]:checked`)].map(i=>i.value);const o=form.querySelector(`[name="${f.k}__outro"]`);v[f.k+"Outro"]=o?o.value.trim():""}
+    else if(f.t==="radio"){v[f.k]=(form.querySelector(`input[name="${f.k}"]:checked`)||{}).value||""}
+    else{const el=form.querySelector(`[name="${f.k}"]`);v[f.k]=el?el.value.trim():"";if(v[f.k]==="__outra"){const t=form.querySelector(`[name="${f.k}__txt"]`);v[f.k]=t?t.value.trim():""}}
+  }
+  return v;
+}
+function atualizarCondicionais(){
+  const T=TIPOS[tipoAtual], v=lerValores();
+  for(const f of T.campos){
+    if(f.quando){const el=$("#campos").querySelector(`[data-k="${f.k}"]`);if(el)el.hidden=!f.quando(v)}
+    if(f.t==="checks"){const o=$("#campos").querySelector(`[data-outro="${f.k}"]`);if(o)o.hidden=!(v[f.k]||[]).includes("Outra")}
+    if(f.t==="linha"||f.t==="linhaSel"){const s=$("#campos").querySelector(`select[name="${f.k}"]`),w=$("#campos").querySelector(`[data-txt="${f.k}"]`);if(s&&w)w.hidden=s.value!=="__outra"}
+  }
+}
+function calcDiferenca(e){
+  if(tipoAtual!=="irregular"||!e||!["programado","realizado"].includes(e.target.name))return;
+  const p=$("#f-programado").value,r=$("#f-realizado").value;if(!p||!r)return;
+  const m=s=>{const[a,b]=s.split(":").map(Number);return a*60+b};
+  let d=m(r)-m(p);if(d<-720)d+=1440;if(d>720)d-=1440;
+  $("#f-diferenca").value=d;
+}
+function renderForm(manter){
+  const T=TIPOS[tipoAtual];
+  const antes=manter?lerValores():null;
+  document.querySelectorAll("#letreiro button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===tipoAtual));
+  $("#h-form").textContent=T.nome; $("#form-hint").textContent=T.dica;
+  $("#campos").innerHTML=T.campos.map(campoHTML).join("");
+  if(antes){for(const f of T.campos){if(f.t==="linhaSel"||f.t==="linha"||f.t==="checks"||f.t==="radio")continue;const el=$("#form").querySelector(`[name="${f.k}"]`);if(el&&antes[f.k])el.value=antes[f.k]}}
+  atualizarCondicionais(); $("#status").textContent="";
+}
+$("#form").addEventListener("input",e=>{if(e.target.name==="aitpNumero"){const v=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"");if(v!==e.target.value)e.target.value=v}calcDiferenca(e);atualizarCondicionais()});
+$("#form").addEventListener("change",atualizarCondicionais);
+$("#btn-limpar").addEventListener("click",()=>renderForm());
+
+function validar(p,v){
+  const faltando=[];
+  if(!p.matricula)faltando.push("Matrícula");else if(!/^\d+$/.test(p.matricula))return"A matrícula deve ter só números.";
+  if(!p.terminal)faltando.push("Terminal");
+  if(!p.tempo)faltando.push("Condições do tempo");
+  for(const f of TIPOS[tipoAtual].campos){
+    if(f.quando&&!f.quando(v))continue;
+    const x=v[f.k];
+    if(f.r&&(Array.isArray(x)?!x.length:!x))faltando.push(f.l);
+    if(f.t==="num"&&x&&f.k!=="diferenca"&&!/^\d+$/.test(x))return`“${f.l}” deve ter só números.`;
+    if(f.t==="aitp"&&x&&!/^[A-Z]\d{9}$/.test(x))return"O número do AITP deve ter 1 letra seguida de 9 números (ex.: A123456789).";
+    if(f.t==="checks"&&x&&x.includes("Outra")&&!v[f.k+"Outro"])return"Descreva o outro motivo.";
+  }
+  return faltando.length?"Preencha: "+faltando.join(", ")+".":"";
+}
+
+/* ---------- Armazenamento no aparelho (funciona sem internet) ---------- */
+const API_OK=/^https:\/\/script\.google(usercontent)?\.com\//.test(API_URL);
+const banco=(()=>{let p;
+  const abrir=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open("ocorrencias",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  return{
+    async get(k){try{const d=await abrir();return await new Promise((res,rej)=>{const q=d.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return store.get("kv:"+k)}},
+    async set(k,v){try{const d=await abrir();await new Promise((res,rej)=>{const tx=d.transaction("kv","readwrite");tx.objectStore("kv").put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){store.set("kv:"+k,v)}}
+  }})();
+const novoId=()=>(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,10));
+let chaveAdmin=store.get("chaveAdmin")||"", podeEditar=!!chaveAdmin;
+let servidor=[], fila=[], registros=[], carregou=false, sincronizando=false, erroSync="", ultimaSync=0;
+
+function atualizarRegistros(){
+  const m=new Map(servidor.map(r=>[r.id,r]));
+  for(const r of fila)m.set(r.id,{...r,pendente:true});
+  registros=[...m.values()].sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
+  renderLista();renderEstat();atualizarStatus();
+}
+function atualizarStatus(){
+  const b=$("#sync");if(!b)return;b.className="sync";
+  const n=fila.length,pend=n===1?"1 aguardando envio":n+" aguardando envio";
+  if(!API_OK){b.textContent=n?"Planilha não conectada · "+pend:"Planilha não conectada";b.classList.add("off");return}
+  if(sincronizando){b.textContent="Enviando…";b.classList.add("run");return}
+  if(!navigator.onLine){b.textContent=n?"Sem internet · "+pend:"Sem internet";b.classList.add(n?"pend":"off");return}
+  if(erroSync){b.textContent=n?"Falha no envio · "+pend:"Falha ao atualizar";b.classList.add("off");b.title=erroSync+" (toque para tentar de novo)";return}
+  if(n){b.textContent=pend;b.classList.add("pend");return}
+  b.textContent="Tudo enviado";b.classList.add("ok");
+  b.title=ultimaSync?"Atualizado às "+new Date(ultimaSync).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";
+}
+async function api(acao,corpo){
+  if(!API_OK)throw new Error("O app ainda não está conectado à planilha.");
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
+  try{
+    const r=await fetch(API_URL,{method:"POST",body:JSON.stringify({acao,...corpo}),signal:ctl.signal,redirect:"follow"});
+    const d=await r.json();if(!d.ok)throw new Error(d.erro||"Erro na planilha.");return d;
+  }finally{clearTimeout(t)}
+}
+async function baixarTudo(){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
+  try{const r=await fetch(API_URL+"?acao=listar&t="+Date.now(),{signal:ctl.signal,redirect:"follow"});const d=await r.json();if(!d.ok)throw new Error(d.erro||"Erro na planilha.");return d}
+  finally{clearTimeout(t)}
+}
+const msgErro=e=>!navigator.onLine?"Sem internet. Tente quando o sinal voltar.":(e&&e.name==="AbortError"?"A planilha demorou a responder. Tente de novo.":(e&&e.message)||"Não foi possível concluir.");
+async function sincronizar(){
+  if(sincronizando||!API_OK||!navigator.onLine){atualizarStatus();return}
+  sincronizando=true;atualizarStatus();
+  try{
+    while(fila.length){
+      const lote=fila.slice(0,40),r=await api("registrar",{registros:lote}),ok=new Set(r.ids);
+      const enviados=lote.filter(x=>ok.has(x.id));
+      servidor=[...enviados,...servidor.filter(x=>!ok.has(x.id))];
+      fila=fila.filter(x=>!ok.has(x.id));await banco.set("fila",fila);
+      if(!enviados.length)break;
+    }
+    const d=await baixarTudo();
+    servidor=d.registros||[];await banco.set("servidor",servidor);
+    if(d.cadastros){await banco.set("cadastros",d.cadastros);aplicarCadastros(d.cadastros)}
+    ultimaSync=Date.now();erroSync="";
+  }catch(e){erroSync=msgErro(e)}
+  sincronizando=false;atualizarRegistros();
+}
+
+$("#form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const st=$("#status"), p=lerPlantao(), v=lerValores(), erro=validar(p,v);
+  st.className="status";
+  if(!plantaoAberto){st.textContent="Abra o plantão com sua matrícula antes de registrar.";st.classList.add("err");$("#c-matricula").focus();return}
+  if(erro){st.textContent=erro;st.classList.add("err");return}
+  const T=TIPOS[tipoAtual], dados={};
+  for(const f of T.campos){if(f.quando&&!f.quando(v))continue;dados[f.k]=Array.isArray(v[f.k])?v[f.k].map(m=>m==="Outra"&&v[f.k+"Outro"]?"Outra: "+v[f.k+"Outro"]:m).join("; "):v[f.k]}
+  const agora=new Date(),data=dados.data||hoje();
+  const doc={id:novoId(),tipo:tipoAtual,tipoNome:T.nome,criadoEm:agora.getTime(),ts:agora.getTime(),enviadoEm:agora.toLocaleString("pt-BR"),
+    matricula:p.matricula,terminal:p.terminal,tempo:p.tempo,data,diaSemana:DIAS[new Date(data+"T12:00:00").getDay()],plantaoAbertoEm,dados};
+  fila.push(doc);await banco.set("fila",fila);
+  renderForm();
+  $("#status").className="status ok";
+  $("#status").textContent=navigator.onLine&&API_OK?"Ocorrência registrada. Enviando…":"Ocorrência guardada no aparelho. Será enviada quando houver internet.";
+  atualizarRegistros();
+  await sincronizar();
+  if(!fila.some(x=>x.id===doc.id)&&$("#status").textContent.startsWith("Ocorrência registrada"))$("#status").textContent="Ocorrência registrada e enviada.";
+});
+
+/* ---------- Lista de registros ---------- */
+$("#f-tipo").innerHTML+=ORDEM.map(k=>`<option value="${k}">${esc(TIPOS[k].nome)}</option>`).join("");
+$("#f-terminal").innerHTML+=TERMINAIS.map(t=>`<option>${esc(t)}</option>`).join("");
+["#f-tipo","#f-terminal","#f-de","#f-ate"].forEach(s=>$(s).addEventListener("input",renderLista));
+
+function filtrados(){
+  const t=$("#f-tipo").value,te=$("#f-terminal").value,de=$("#f-de").value,ate=$("#f-ate").value;
+  return registros.filter(r=>(!t||r.tipo===t)&&(!te||r.terminal===te)&&(!de||r.data>=de)&&(!ate||r.data<=ate));
+}
+function renderLista(){
+  const L=$("#lista");
+  if(!carregou){L.innerHTML=`<p class="empty">Carregando registros…</p>`;return}
+  const rs=filtrados();
+  $("#count").textContent=rs.length===1?"1 registro":rs.length+" registros";
+  if(!rs.length){L.innerHTML=`<p class="empty">${registros.length?"Nenhum registro com esses filtros.":"Nenhuma ocorrência registrada ainda. Use a aba Registrar para criar a primeira."}</p>`;return}
+  L.innerHTML=rs.map(r=>{
+    const T=TIPOS[r.tipo]||{nome:r.tipo,tag:"?",campos:[]};
+    const quando=new Date(r.criadoEm).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+    const linhas=[["Matrícula",r.matricula],["Tempo",r.tempo],...T.campos.filter(f=>f.k!=="data").map(f=>[f.l,r.dados&&r.dados[f.k]])].filter(([,x])=>x!==undefined&&x!=="");
+    return`<article class="rec"><div class="rec-h"><span class="tag">${esc(T.tag)}</span><strong>${esc(r.terminal)} · ${esc(fmtData(r.data))}</strong>${r.pendente?'<span class="pend-tag">aguardando envio</span>':""}<span class="when">registrado ${esc(quando)}${r.editadoEm?" (editado)":""}</span></div>
+    <dl>${linhas.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>
+    ${podeEditar&&!r.pendente?`<div class="acoes"><button class="edit" data-id="${esc(r.id)}">Editar registro</button><button class="del" data-id="${esc(r.id)}">Apagar registro</button></div>`:""}</article>`;
+  }).join("");
+}
+$("#lista").addEventListener("click",async e=>{
+  const ed=e.target.closest(".edit");if(ed&&podeEditar){abrirEditor(ed.dataset.id);return}
+  const b=e.target.closest(".del");if(!b||!podeEditar)return;
+  if(!confirm("Apagar este registro? Não é possível desfazer."))return;
+  b.disabled=true;
+  try{await api("apagar",{chave:chaveAdmin,id:b.dataset.id});servidor=servidor.filter(x=>x.id!==b.dataset.id);await banco.set("servidor",servidor);atualizarRegistros()}
+  catch(err){b.disabled=false;alert("Não foi possível apagar. "+msgErro(err))}
+});
+
+/* ---------- Edição de registros (só dono e editores) ---------- */
+let editando=null;
+function editorHTML(r){
+  const d=r.dados||{},T=TIPOS[r.tipo];
+  const sel=(name,opts,val)=>`<select name="${name}"><option value="">Selecione…</option>${(!val||opts.includes(val)?opts:[val,...opts]).map(o=>`<option${o===val?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  let h=`<label class="f">Matrícula<input name="_matricula" inputmode="numeric" value="${esc(r.matricula)}"></label><label class="f">Terminal${sel("_terminal",TERMINAIS,r.terminal)}</label><label class="f">Condições do tempo${sel("_tempo",TEMPO,r.tempo)}</label>`;
+  for(const f of T.campos){
+    const v=d[f.k]??"",n="e_"+f.k;
+    if(f.t==="select"||f.t==="radio")h+=`<label class="f">${esc(f.l)}${sel(n,f.o,v)}</label>`;
+    else if(f.t==="linha"||f.t==="linhaSel"){const gr=LINHAS[r.terminal]||Object.values(LINHAS).flat();h+=`<label class="f full">${esc(f.l)}${sel(n,[...new Set(gr.flatMap(g=>g[1]))],v)}</label>`}
+    else if(f.t==="checks"){const marc=String(v).split("; ").filter(Boolean),outro=(marc.find(m=>m.startsWith("Outra: "))||"").slice(7);
+      h+=`<fieldset class="full"><legend>${esc(f.l)}</legend><div class="chips">${f.o.map(o=>{const c=o==="Outra"?marc.some(m=>m==="Outra"||m.startsWith("Outra: ")):marc.includes(o);return`<label class="chip"><input type="checkbox" name="${n}" value="${esc(o)}"${c?" checked":""}><span>${esc(o)}</span></label>`}).join("")}</div><label class="f" style="margin-top:10px">Outro motivo<input name="${n}__outro" value="${esc(outro)}"></label></fieldset>`}
+    else if(f.t==="area")h+=`<label class="f full">${esc(f.l)}<textarea name="${n}">${esc(v)}</textarea></label>`;
+    else h+=`<label class="f${f.full?" full":""}">${esc(f.l)}<input ${f.t==="date"?'type="date"':f.t==="time"?'type="time"':""} name="${n}" value="${esc(v)}" autocomplete="off"></label>`;
+  }
+  return h;
+}
+function abrirEditor(id){
+  const r=registros.find(x=>x.id===id);if(!r||!TIPOS[r.tipo])return;
+  editando=r;$("#dlg-titulo").textContent="Editar: "+TIPOS[r.tipo].nome;
+  $("#dlg-campos").innerHTML=editorHTML(r);$("#dlg-status").textContent="";$("#dlg").showModal();
+}
+$("#dlg-cancelar").addEventListener("click",()=>{$("#dlg").close();editando=null});
+$("#dlg-form").addEventListener("submit",async e=>{
+  e.preventDefault();if(!editando||!podeEditar)return;
+  const F=$("#dlg-form"),g=n=>{const el=F.querySelector(`[name="${n}"]`);return el?el.value.trim():""},st=$("#dlg-status");st.className="status";
+  const mat=g("_matricula");if(mat&&!/^\d+$/.test(mat)){st.textContent="A matrícula deve ter só números.";st.classList.add("err");return}
+  const T=TIPOS[editando.tipo],dados={};
+  for(const f of T.campos){const n="e_"+f.k;if(f.t==="checks"){const o=g(n+"__outro");dados[f.k]=[...F.querySelectorAll(`input[name="${n}"]:checked`)].map(i=>i.value==="Outra"&&o?"Outra: "+o:i.value).join("; ")}else dados[f.k]=g(n)}
+  const {pendente,...resto}=editando,data=dados.data||resto.data;
+  const doc={...resto,matricula:mat,terminal:g("_terminal"),tempo:g("_tempo"),dados,data,diaSemana:DIAS[new Date(data+"T12:00:00").getDay()],editadoEm:new Date().toLocaleString("pt-BR")};
+  st.textContent="Salvando…";
+  try{await api("editar",{chave:chaveAdmin,registro:doc});servidor=servidor.map(x=>x.id===doc.id?doc:x);await banco.set("servidor",servidor);$("#dlg").close();editando=null;atualizarRegistros()}
+  catch(err){st.textContent="Não foi possível salvar. "+msgErro(err);st.classList.add("err")}
+});
+
+/* ---------- Cadastros (terminais, linhas, empresas) ---------- */
+let cadSujo=false;
+function preencherTerminais(){
+  const c=$("#c-terminal"),atual=c.value,lista=TERMINAIS.includes(atual)||!atual?TERMINAIS:[...TERMINAIS,atual];
+  c.innerHTML='<option value="">Selecione…</option>'+lista.map(t=>`<option>${esc(t)}</option>`).join("");c.value=atual;
+  for(const s of ["#f-terminal","#e-terminal"]){const el=$(s),v=el.value;el.innerHTML='<option value="">Todos</option>'+TERMINAIS.map(t=>`<option>${esc(t)}</option>`).join("");el.value=TERMINAIS.includes(v)?v:""}
+}
+function aplicarCadastros(c){
+  if(!c||!Array.isArray(c.terminais)||!c.terminais.length)return;
+  TERMINAIS.splice(0,TERMINAIS.length,...c.terminais.map(t=>t.nome));
+  for(const k of Object.keys(LINHAS))delete LINHAS[k];
+  for(const t of c.terminais){const gs=(t.grupos||[]).filter(g=>g.linhas&&g.linhas.length);if(gs.length)LINHAS[t.nome]=gs.map(g=>[g.nome||"",[...g.linhas]])}
+  if(Array.isArray(c.empresas)&&c.empresas.length)EMPRESAS.splice(0,EMPRESAS.length,...c.empresas);
+  preencherTerminais();renderForm(true);renderLista();renderEstat();
+  if(!$("#view-cadastros").hidden&&!cadSujo)renderCadastros();
+}
+function estadoCadastros(){
+  return{terminais:TERMINAIS.map(n=>({nome:n,grupos:(LINHAS[n]||[]).map(([g,ls])=>({nome:g,linhas:[...ls]}))})),empresas:[...EMPRESAS]};
+}
+const grupoHTML=g=>`<div class="cad-g"><label class="f">Nome do grupo <span class="opc">(opcional, ex.: Corujão)</span><input class="g-nome" value="${esc(g.nome)}" autocomplete="off"></label><label class="f">Linhas <span class="opc">(uma por linha, ex.: 136 - Terminal Central)</span><textarea class="g-linhas" rows="7">${esc(g.linhas.join("\n"))}</textarea></label><button type="button" class="lnk-del g-remover">Remover grupo</button></div>`;
+function termHTML(t,aberto){
+  const n=t.grupos.reduce((s,g)=>s+g.linhas.length,0);
+  return`<details class="cad-t"${aberto?" open":""}><summary><span class="cad-nome">${esc(t.nome||"Novo terminal")}</span><span class="cad-qt">${n} ${n===1?"linha":"linhas"}</span></summary><div class="cad-body"><label class="f">Nome do terminal<input class="t-nome" value="${esc(t.nome)}" autocomplete="off"></label><div class="t-grupos">${t.grupos.map(grupoHTML).join("")}</div><div class="actions" style="margin-top:0"><button type="button" class="btn sec t-add-grupo">Adicionar grupo de linhas</button><button type="button" class="lnk-del t-remover">Remover terminal</button></div></div></details>`;
+}
+function renderCadastros(){
+  const av=$("#cad-aviso"),ct=$("#cad-conteudo");
+  $("#adm-login").hidden=podeEditar;$("#adm-area").hidden=!podeEditar;
+  if(!podeEditar)return;
+  av.hidden=true;ct.hidden=false;if(cadSujo)return;
+  const c=estadoCadastros();
+  $("#cad-terminais").innerHTML=c.terminais.map(t=>termHTML(t,false)).join("");
+  $("#cad-empresas").value=c.empresas.join("\n");$("#cad-status").textContent="";
+}
+function lerCadastros(){
+  return{terminais:[...document.querySelectorAll("#cad-terminais .cad-t")].map(el=>({nome:el.querySelector(".t-nome").value.trim(),grupos:[...el.querySelectorAll(".cad-g")].map(g=>({nome:g.querySelector(".g-nome").value.trim(),linhas:[...new Set(g.querySelector(".g-linhas").value.split("\n").map(x=>x.trim()).filter(Boolean))]})).filter(g=>g.linhas.length||g.nome)})),
+    empresas:[...new Set($("#cad-empresas").value.split("\n").map(x=>x.trim()).filter(Boolean))]};
+}
+$("#cad-conteudo").addEventListener("input",e=>{cadSujo=true;$("#cad-status").textContent="";if(e.target.classList.contains("t-nome"))e.target.closest(".cad-t").querySelector(".cad-nome").textContent=e.target.value||"Novo terminal"});
+$("#cad-terminais").addEventListener("click",e=>{
+  const t=e.target;
+  if(t.classList.contains("t-add-grupo")){t.closest(".cad-t").querySelector(".t-grupos").insertAdjacentHTML("beforeend",grupoHTML({nome:"",linhas:[]}));cadSujo=true}
+  else if(t.classList.contains("g-remover")){if(confirm("Remover este grupo de linhas?")){t.closest(".cad-g").remove();cadSujo=true}}
+  else if(t.classList.contains("t-remover")){const nome=t.closest(".cad-t").querySelector(".t-nome").value||"este terminal";if(confirm(`Remover ${nome} da lista? Os registros já feitos continuam salvos.`)){t.closest(".cad-t").remove();cadSujo=true}}
+});
+$("#cad-add-term").addEventListener("click",()=>{
+  $("#cad-terminais").insertAdjacentHTML("beforeend",termHTML({nome:"",grupos:[{nome:"",linhas:[]}]},true));cadSujo=true;
+  const ts=document.querySelectorAll("#cad-terminais .t-nome");ts[ts.length-1].focus();
+});
+$("#cad-descartar").addEventListener("click",()=>{cadSujo=false;renderCadastros()});
+$("#cad-salvar").addEventListener("click",async()=>{
+  const st=$("#cad-status");st.className="status";
+  if(!podeEditar){st.textContent="Entre como administrador para alterar os cadastros.";st.classList.add("err");return}
+  const c=lerCadastros(),nomes=c.terminais.map(t=>t.nome);
+  if(!nomes.length){st.textContent="Deixe pelo menos um terminal.";st.classList.add("err");return}
+  if(nomes.some(n=>!n)){st.textContent="Todo terminal precisa de um nome.";st.classList.add("err");return}
+  const dup=nomes.find((n,i)=>nomes.indexOf(n)!==i);if(dup){st.textContent=`O terminal “${dup}” aparece duas vezes.`;st.classList.add("err");return}
+  if(!c.empresas.length){st.textContent="Deixe pelo menos uma empresa.";st.classList.add("err");return}
+  const btn=$("#cad-salvar");btn.disabled=true;st.textContent="Salvando…";
+  try{await api("salvarCadastros",{chave:chaveAdmin,cadastros:c});await banco.set("cadastros",c);cadSujo=false;aplicarCadastros(c);renderCadastros();st.textContent="Cadastros salvos. Os outros aparelhos recebem as novas listas na próxima vez que estiverem com internet.";st.classList.add("ok")}
+  catch(err){st.textContent="Não foi possível salvar. "+msgErro(err);st.classList.add("err")}
+  finally{btn.disabled=false}
+});
+
+$("#adm-entrar").addEventListener("click",async()=>{
+  const st=$("#adm-status"),ch=$("#adm-chave").value.trim();st.className="status";
+  if(!ch){st.textContent="Digite a chave.";st.classList.add("err");return}
+  st.textContent="Verificando…";
+  try{await api("verificarChave",{chave:ch});chaveAdmin=ch;podeEditar=true;store.set("chaveAdmin",ch);$("#adm-chave").value="";st.textContent="";renderCadastros();renderLista()}
+  catch(err){st.textContent=msgErro(err);st.classList.add("err")}
+});
+$("#adm-chave").addEventListener("keydown",e=>{if(e.key==="Enter")$("#adm-entrar").click()});
+$("#adm-sair").addEventListener("click",()=>{chaveAdmin="";podeEditar=false;try{localStorage.removeItem("chaveAdmin")}catch(e){}cadSujo=false;renderCadastros();renderLista()});
+
+/* ---------- CSV ---------- */
+$("#btn-csv").addEventListener("click",async()=>{
+  const st=$("#csv-status");st.className="status";st.textContent="";
+  const rs=filtrados();
+  if(!rs.length){st.textContent="Não há registros para baixar.";st.classList.add("err");return}
+  const cols=[["tipo","Tipo"],["data","Data"],["diaSemana","Dia da semana"],["terminal","Terminal"],["matricula","Matrícula"],["tempo","Condições do tempo"]];
+  const vistos=new Set();
+  for(const k of ORDEM)if(rs.some(r=>r.tipo===k))for(const f of TIPOS[k].campos)if(f.k!=="data"&&!vistos.has(f.l)){vistos.add(f.l);cols.push(["d:"+f.k+":"+f.l,f.l])}
+  const cel=x=>{x=String(x??"");return/[;"\n\r]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x};
+  const linhas=[cols.map(c=>cel(c[1])).join(";"),...rs.map(r=>cols.map(([k])=>{
+    if(k==="tipo")return cel((TIPOS[r.tipo]||{}).nome||r.tipo);
+    if(k==="data")return cel(fmtData(r.data));
+    if(k.startsWith("d:")){const[,ck,cl]=k.split(":");const T=TIPOS[r.tipo];const f=T&&T.campos.find(f=>f.k===ck&&f.l===cl);return cel(f&&r.dados?r.dados[ck]:"")}
+    return cel(r[k]);
+  }).join(";"))];
+  const csv="\uFEFF"+linhas.join("\r\n");
+  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"})),a=document.createElement("a");
+  a.href=url;a.download=`ocorrencias-${hoje()}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+  st.textContent="Planilha baixada.";st.classList.add("ok");
+});
+
+/* ---------- Navegação ---------- */
+function rota(){
+  const h=location.hash.slice(1), r=["registros","estatisticas","admin"].includes(h)?h:"registrar";
+  for(const v of ["registrar","registros","estatisticas","admin"]){
+    $("#view-"+v).hidden=r!==v;
+    if(r===v)$("#nav-"+v).setAttribute("aria-current","page");else $("#nav-"+v).removeAttribute("aria-current");
+  }
+  if(r==="registros")renderLista();
+  if(r==="estatisticas")renderEstat();
+  if(r==="admin")renderCadastros();
+}
+
+/* ---------- Estatísticas ---------- */
+$("#e-terminal").innerHTML+=TERMINAIS.map(t=>`<option>${esc(t)}</option>`).join("");
+["#e-terminal","#e-de","#e-ate"].forEach(s=>$(s).addEventListener("input",()=>{if(s!=="#e-terminal")marcarRapido("");renderEstat()}));
+function marcarRapido(p){document.querySelectorAll("#e-rapido .chipbtn").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p===p))}
+$("#e-rapido").addEventListener("click",e=>{
+  const b=e.target.closest(".chipbtn");if(!b)return;const p=b.dataset.p,t=hoje();
+  if(p==="hoje"){$("#e-de").value=t;$("#e-ate").value=t}
+  else if(p==="7"){const d=new Date(t+"T12:00:00");d.setDate(d.getDate()-6);$("#e-de").value=d.toISOString().slice(0,10);$("#e-ate").value=t}
+  else if(p==="mes"){$("#e-de").value=t.slice(0,8)+"01";$("#e-ate").value=t}
+  else{$("#e-de").value="";$("#e-ate").value=""}
+  marcarRapido(p);renderEstat();
+});
+marcarRapido("tudo");
+const D=(r,k)=>r.dados?r.dados[k]:"";
+const motivos=r=>String(D(r,"motivo")||"").split("; ").filter(Boolean).map(m=>m.startsWith("Outra:")?"Outra":m);
+const emMin=s=>{const m=/^(\d{1,2}):(\d{2})$/.exec(s||"");return m?+m[1]*60+ +m[2]:null};
+function cont(arr,get){const m=new Map();for(const r of arr){const v=get(r);for(const x of(Array.isArray(v)?v:[v])){if(x===undefined||x===null||x==="")continue;m.set(x,(m.get(x)||0)+1)}}return[...m].sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0])))}
+function barras(titulo,pares,lim=8){
+  if(!pares.length)return"";const max=pares[0][1],resto=pares.length-lim;
+  return`<div class="bg"><h4>${esc(titulo)}</h4>${pares.slice(0,lim).map(([l,c])=>`<div class="br"><span class="lb" title="${esc(l)}">${esc(l)}</span><span class="ct">${c}</span><span class="bar"><i style="width:${(c/max*100).toFixed(1)}%"></i></span></div>`).join("")}${resto>0?`<p class="mais">e mais ${resto} ${resto===1?"item":"itens"}</p>`:""}</div>`;
+}
+const kpi=(l,v)=>`<div class="kpi"><b>${esc(v)}</b><span>${esc(l)}</span></div>`;
+const fmtMin=n=>n===null||isNaN(n)?"–":(Math.abs(n)>=60?Math.floor(n/60)+"h"+String(Math.round(Math.abs(n)%60)).padStart(2,"0"):Math.round(n)+" min");
+const media=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+function renderEstat(){
+  const E=$("#estat");if(!E||$("#view-estatisticas").hidden)return;
+  if(!carregou){E.innerHTML=`<p class="empty">Carregando registros…</p>`;return}
+  const te=$("#e-terminal").value,de=$("#e-de").value,ate=$("#e-ate").value;
+  const rs=registros.filter(r=>(!te||r.terminal===te)&&(!de||r.data>=de)&&(!ate||r.data<=ate));
+  if(!rs.length){E.innerHTML=`<p class="empty">${registros.length?"Nenhum registro nesse período e terminal.":"Ainda não há registros para somar."}</p>`;return}
+  const por=k=>rs.filter(r=>r.tipo===k);
+  let h=`<div class="tot"><div class="geral"><b>${rs.length}</b><span>Total de registros</span></div>${ORDEM.map(k=>`<div><b>${por(k).length}</b><span>${esc(TIPOS[k].nome)}</span></div>`).join("")}</div>`;
+  const geral=[];
+  if(!te)geral.push(barras("Registros por terminal",cont(rs,r=>r.terminal),16));
+  geral.push(barras("Registros por dia",cont(rs,r=>r.data).sort((a,b)=>b[0].localeCompare(a[0])).map(([d,c])=>[fmtData(d),c]),10));
+  geral.push(barras("Registros por matrícula",cont(rs,r=>r.matricula),8));
+  geral.push(barras("Condições do tempo",cont(rs,r=>r.tempo)));
+  h+=`<div class="bloco"><h3><span>Visão geral</span></h3><div class="barras">${geral.join("")}</div></div>`;
+  const bloco=(k,kp,bs)=>{const n=por(k).length;if(!n)return"";return`<div class="bloco"><h3><span>${esc(TIPOS[k].nome)}</span><span>${n}</span></h3><div class="kpis">${kp.join("")}</div><div class="barras">${bs.join("")}</div></div>`};
+  // Viagens não realizadas
+  {const a=por("alteracao");const tv=v=>a.filter(r=>D(r,"tipoViagem")===v).length;
+   h+=bloco("alteracao",[kpi("Faltas",tv("Falta")),kpi("Extras autorizadas",tv("Extra autorizada")),kpi("Extras não autorizadas",tv("Extra não autorizada")),kpi("Com AITP",a.filter(r=>D(r,"aitp")==="Sim").length)],
+     [barras("Por linha",cont(a,r=>D(r,"linha"))),barras("Por empresa",cont(a,r=>D(r,"empresa"))),barras("Por tipo de viagem",cont(a,r=>D(r,"tipoViagem")))]);}
+  // Horários irregulares
+  {const a=por("irregular");const ds=a.map(r=>parseFloat(D(r,"diferenca"))).filter(x=>!isNaN(x));const at=ds.filter(x=>x>0),ad=ds.filter(x=>x<0);
+   h+=bloco("irregular",[kpi("Atrasados",at.length),kpi("Adiantados",ad.length),kpi("Atraso médio",fmtMin(media(at))),kpi("Maior atraso",at.length?fmtMin(Math.max(...at)):"–"),kpi("Adiantamento médio",ad.length?fmtMin(Math.abs(media(ad))):"–"),kpi("Com AITP",a.filter(r=>D(r,"aitp")==="Sim").length)],
+     [barras("Por motivo",cont(a,motivos)),barras("Por linha",cont(a,r=>D(r,"linha"))),barras("Por empresa",cont(a,r=>D(r,"empresa")))]);}
+  // Trocas realizadas
+  {const a=por("troca");
+   h+=bloco("troca",[kpi("Veículos retirados",new Set(a.map(r=>D(r,"saiPrefixo")).filter(Boolean)).size),kpi("Linhas afetadas",new Set(a.map(r=>D(r,"linha")).filter(Boolean)).size),kpi("Por solicitação de garagem",a.filter(r=>motivos(r).includes("Solicitação de garagem")).length)],
+     [barras("Por motivo",cont(a,motivos)),barras("Por empresa",cont(a,r=>D(r,"empresa"))),barras("Por linha",cont(a,r=>D(r,"linha"))),barras("Veículos com mais trocas (sai prefixo)",cont(a,r=>D(r,"saiPrefixo")).filter(x=>x[1]>1),5)]);}
+  // Veículos reservas
+  {const a=por("reserva");const perm=a.map(r=>{const c=emMin(D(r,"chegada")),s=emMin(D(r,"saida"));if(c===null||s===null)return null;let d=s-c;if(d<0)d+=1440;return d}).filter(x=>x!==null);
+   h+=bloco("reserva",[kpi("Com equipe",a.filter(r=>D(r,"equipe")==="Sim").length),kpi("Sem equipe",a.filter(r=>D(r,"equipe")==="Não").length),kpi("Ainda sem saída",a.filter(r=>D(r,"chegada")&&!D(r,"saida")).length),kpi("Tempo médio no terminal",fmtMin(media(perm)))],
+     [barras("Por empresa",cont(a,r=>D(r,"empresa"))),barras("Por prefixo",cont(a,r=>D(r,"prefixo")),6)]);}
+  // Outras ocorrências
+  {const a=por("outra");
+   h+=bloco("outra",[kpi("Dias com ocorrência",new Set(a.map(r=>r.data)).size)],[te?"":barras("Por terminal",cont(a,r=>r.terminal))]);}
+  E.innerHTML=h;
+}
+window.addEventListener("hashchange",rota);
+
+/* ---------- Início ---------- */
+renderForm(); rota(); renderLista();
+(async()=>{
+  const [srv,fl,cad]=await Promise.all([banco.get("servidor"),banco.get("fila"),banco.get("cadastros")]);
+  servidor=Array.isArray(srv)?srv:[];fila=Array.isArray(fl)?fl:[];
+  if(cad)aplicarCadastros(cad);
+  carregou=true;atualizarRegistros();
+  if(!API_OK){$("#db-note").hidden=false;$("#db-note").textContent="Este app ainda não está conectado à planilha. Os registros ficam guardados no aparelho até a conexão ser configurada."}
+  sincronizar();
+})();
+window.addEventListener("online",sincronizar);
+window.addEventListener("offline",atualizarStatus);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)sincronizar()});
+setInterval(sincronizar,60000);
+$("#sync").addEventListener("click",()=>{erroSync="";sincronizar()});
+
+/* Instalação e funcionamento sem internet */
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+let pedidoInstalar=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();pedidoInstalar=e;$("#btn-instalar").hidden=false});
+$("#btn-instalar").addEventListener("click",async()=>{if(!pedidoInstalar)return;pedidoInstalar.prompt();await pedidoInstalar.userChoice.catch(()=>{});pedidoInstalar=null;$("#btn-instalar").hidden=true});
+window.addEventListener("appinstalled",()=>{$("#btn-instalar").hidden=true});
+</script>
+</body>
+</html>
