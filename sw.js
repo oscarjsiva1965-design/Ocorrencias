@@ -1,6 +1,6 @@
 /* Guarda o app no aparelho para abrir sem internet.
    Ao publicar uma nova versão do app, troque o número abaixo (v1 -> v2) para os aparelhos atualizarem. */
-const VERSAO = "ocorrencias-v1";
+const VERSAO = "ocorrencias-v3";
 const ARQUIVOS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

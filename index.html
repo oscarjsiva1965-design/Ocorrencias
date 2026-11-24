@@ -170,6 +170,29 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 <main>
   <div id="db-note" class="notice" hidden></div>
 
+  <!-- ===== ENTRAR ===== -->
+  <div id="view-login" hidden>
+    <section class="panel" aria-labelledby="h-login" id="login-form">
+      <h2 id="h-login">Entrar no app</h2>
+      <p class="hint">Seu login é <b>00 + sua matrícula</b>. No primeiro acesso, a senha também é 00 + sua matrícula, e o app pede para você criar uma senha nova.</p>
+      <div class="grid">
+        <label class="f"><span class="req">Login</span><input id="l-login" inputmode="numeric" autocomplete="username" placeholder="00 + matrícula"></label>
+        <label class="f"><span class="req">Senha</span><input id="l-senha" type="password" autocomplete="current-password"></label>
+      </div>
+      <div class="actions"><button type="button" class="btn" id="l-entrar">Entrar</button><span class="status" id="l-status" role="status" aria-live="polite"></span></div>
+    </section>
+    <section class="panel" aria-labelledby="h-troca" id="troca-form" hidden>
+      <h2 id="h-troca">Criar nova senha</h2>
+      <p class="hint" id="troca-hint">A nova senha deve ter <b>6 letras ou números</b>, por exemplo: a1b2c3. Letras maiúsculas e minúsculas são diferentes.</p>
+      <div class="grid">
+        <label class="f" id="t-atual-box"><span class="req">Senha atual</span><input id="t-atual" type="password" autocomplete="current-password"></label>
+        <label class="f"><span class="req">Nova senha</span><input id="t-nova" type="password" maxlength="6" autocomplete="new-password"></label>
+        <label class="f"><span class="req">Repita a nova senha</span><input id="t-repete" type="password" maxlength="6" autocomplete="new-password"></label>
+      </div>
+      <div class="actions"><button type="button" class="btn" id="t-salvar">Salvar nova senha</button><button type="button" class="btn sec" id="t-cancelar">Cancelar</button><span class="status" id="t-status" role="status" aria-live="polite"></span></div>
+    </section>
+  </div>
+
   <!-- ===== REGISTRAR ===== -->
   <div id="view-registrar">
     <section class="panel" aria-labelledby="h-plantao">
@@ -179,14 +202,14 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
         <button type="button" class="btn sec" id="btn-alterar-plantao">Alterar</button>
       </div>
       <div id="plantao-edit">
-      <p class="hint">Cada agente abre o plantão com a própria matrícula. Ao sair do app o plantão é encerrado, e quem render precisa abrir de novo com a sua matrícula.</p>
+      <p class="hint">A matrícula vem do seu login. Ao apertar Sair, o plantão é encerrado e quem render entra com o próprio login e senha.</p>
       <div class="resumo-dados data-hoje" id="plantao-hoje"></div>
       <div class="grid">
-        <label class="f"><span class="req">Matrícula</span><input id="c-matricula" inputmode="numeric" pattern="[0-9]*" autocomplete="off"></label>
+        <label class="f"><span class="req">Matrícula</span><input id="c-matricula" inputmode="numeric" pattern="[0-9]*" autocomplete="off" readonly></label>
         <label class="f"><span class="req">Terminal</span><select id="c-terminal"></select></label>
         <fieldset class="full"><legend class="req">Condições do tempo</legend><div class="chips" id="c-tempo"></div></fieldset>
       </div>
-      <div class="actions"><button type="button" class="btn" id="btn-confirmar-plantao">Abrir plantão</button><span class="status" id="plantao-status" role="status" aria-live="polite"></span></div>
+      <div class="actions"><button type="button" class="btn" id="btn-confirmar-plantao">Abrir plantão</button><button type="button" class="btn sec" id="btn-trocar-senha">Trocar minha senha</button><span class="status" id="plantao-status" role="status" aria-live="polite"></span></div>
       </div>
     </section>
 
@@ -268,6 +291,13 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
           <h3 class="sub">Terminais e linhas</h3>
           <div id="cad-terminais"></div>
           <button type="button" class="btn sec" id="cad-add-term">Adicionar terminal</button>
+          <h3 class="sub">Agentes com acesso ao app</h3>
+          <p class="hint">Uma matrícula por linha, com o nome depois de um traço (ex.: 12345 - João Silva). Só quem está nesta lista consegue entrar. O login de cada agente é 00 + matrícula, e a senha inicial também.</p>
+          <div class="actions" style="margin:0 0 8px"><button type="button" class="btn sec" id="ag-carregar">Carregar lista da planilha</button><span class="status" id="ag-info"></span></div>
+          <label class="f">Agentes<textarea id="ag-lista" rows="8" placeholder="12345 - João Silva"></textarea></label>
+          <div class="actions"><button type="button" class="btn" id="ag-salvar">Salvar agentes</button><span class="status" id="ag-status" role="status" aria-live="polite"></span></div>
+          <div class="grid" style="margin-top:10px"><label class="f">Redefinir senha da matrícula<input id="ag-reset-mat" inputmode="numeric" autocomplete="off"></label></div>
+          <div class="actions"><button type="button" class="btn sec" id="ag-reset">Voltar senha para a inicial</button><span class="status" id="ag-reset-status" role="status" aria-live="polite"></span></div>
           <h3 class="sub">Empresas</h3>
           <label class="f">Uma empresa por linha<textarea id="cad-empresas" rows="8"></textarea></label>
           <div class="actions">
@@ -299,32 +329,34 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
    CONFIGURAÇÃO: cole aqui a URL do App da Web do Google Apps Script
    (termina em /exec). Veja o GUIA.
    ============================================================ */
-const API_URL = "https://script.google.com/macros/s/AKfycbyYpgFThLH8aMq2N825R8os-EVltS6Y10X0eHUN2XHuU0NkgfpuNz0omlx2OKWdAR9u/exec";
+const API_URL = "COLE_AQUI_A_URL_DO_APPS_SCRIPT";
 
 /* ---------- Dados dos formulários ---------- */
-const TERMINAIS=["Barão Geraldo","Campo Grande","Central","Shopping Iguatemi","Itajaí","Mercado","Metropolitano","Ouro Verde","Padre Anchieta","Shopping Dom Pedro","Vida Nova","Vila União","Satélite Íris","Campos Elíseos","Santa Lúcia","BRT Mercado"];
+const TERMINAIS=["T01 - Terminal Central","T02 - Terminal Ouro Verde","T03 - Terminal BRT Campo Grande","T04 - Terminal Mercado","T05 - Terminal Padre Anchieta","T06 - Terminal Vida Nova","T07 - Terminal Barão Geraldo","T08 - Terminal Metropolitano","T09 - Terminal Itajaí","T10 - Terminal Vila União","T11 - Terminal Shopping Iguatemi","T12 - Terminal Shopping Dom Pedro","T13 - Terminal Campos Elíseos","T14 - Terminal Santa Lúcia","T15 - Terminal Satélite Íris"];
+/* nomes antigos (versão 1) -> nomes novos, para o terminal lembrado no aparelho */
+const NOME_ANTIGO={"Central":"T01 - Terminal Central","Ouro Verde":"T02 - Terminal Ouro Verde","Campo Grande":"T03 - Terminal BRT Campo Grande","Mercado":"T04 - Terminal Mercado","Padre Anchieta":"T05 - Terminal Padre Anchieta","Vida Nova":"T06 - Terminal Vida Nova","Barão Geraldo":"T07 - Terminal Barão Geraldo","Metropolitano":"T08 - Terminal Metropolitano","Itajaí":"T09 - Terminal Itajaí","Vila União":"T10 - Terminal Vila União","Shopping Iguatemi":"T11 - Terminal Shopping Iguatemi","Shopping Dom Pedro":"T12 - Terminal Shopping Dom Pedro","Campos Elíseos":"T13 - Terminal Campos Elíseos","Santa Lúcia":"T14 - Terminal Santa Lúcia","Satélite Íris":"T15 - Terminal Satélite Íris","BRT Mercado":"T04 - Terminal Mercado"};
 const EMPRESAS=["VB1","VB3","CAMPIBUS","PADOVA","ITAJAI","ONICAMP","COOPERATAS","COTALCAMP","ALTERCAMP","COOPCAMP"];
 const TEMPO=["Ensolarado","Nublado","Chuvoso","Tempo bom"];
 
 const LINHAS={
-"Central":[["",["115 - Adhemar de Barros","120 - Terminal Ouro Verde","136 - Terminal Central","163 - Jardim Campos Elíseos","164 - Parque Tropical","186 - Jardim Santa Maria / Semi Expressa","189 - Jardim Columbia","191 - Jardim Fernanda","194 - Jardim Itaguaçu","195 - Vila Palmeiras","214 - Terminal Itajaí / Semi Expressa","231 - Satélite Íris I","380 - Cambuí / Norte Sul","401 - Chácaras São Martinho","402 - Parque da Figueira / Swiss Park","404 - Jardim Maria Rosa","405 - Jardim Petrópolis","411 - Jardim do Lago II","412 - Parque Eldorado","414 - Parque Oziel","415 - Gleba B","422 - Jardim Nova América","429 - Swiss Park","430 - Swiss Park","431 - Reforma Agrária","432 - Saltinho","433 - Mora das Bandeiras","434 - Nossa Senhora de Lourdes","BRT10 - Terminal Ouro Verde","BRT11 - Terminal Vida Nova","BRT12 - Terminal Campos Elíseos"]]],
-"Campo Grande":[["",["123 - Ter. Ouro Verde","200 - Jd Novo Maracanã","201 - Jd Santa Rosa","202 - Pq Valença II","203 - Campina Grande","204 - Pq Floresta","205 - Ter. Ouro Verde","206 - Santa Clara","207 - Jd Novo Mundo","208 - Jd Maracanã","209 - Chácara Cruzeiro do Sul","209.1 - Chácara Cruzeiro do Sul / Colina Verde","210 - Ter. Barão Geraldo","211 - Shopping Iguatemi","215 - Jd Bassoli","216 - Res. Colinas das Nascentes","217 - Res. São Luiz","218 - Ter. Itajaí - Semi Expressa","220 - Cambuí","BRT20 - Campo Grande (parador)","BRT21 - Campo Grande (Semi Expresso)"]]],
-"Barão Geraldo":[["",["134 - Ter. Ouro Verde","210 - Ter. Campo Grande","269 - Ter. Padre Anchieta","300 - Souzas","314 - Ter. Padre Anchieta","319 - Pq Cidade","320 - Real Parque II","321 - Centro Médico","322 - Village Campinas","323 - Vila Holândia","324 - Real Parque","325 - Vila Santa Izabel","328 - Cidade Judiciária","329 - Cidade Judiciária","329.1 - Cidade Judiciária","331 - Rodoviária","333 - Ter. Barão Geraldo","336 - Hospital das Clínicas","337 - Unicamp","338 - Shopping Iguatemi"]]],
-"Shopping Iguatemi":[["",["125 - Terminal Ouro Verde","211 - Terminal Campo Grande","249 - Jardim Flamboyant / Pq dos Eucaliptos","260 - Padre Anchieta","338 - Terminal Barão Geraldo","362 - Parque Brasília","381 - Shopping Dom Pedro","383 - Leroy Merlin via Planalto","383.1 - Leroy Merlin","384 - Entreverdes","385 - Terminal Metropolitano"]]],
-"Mercado":[
+"T01 - Terminal Central":[["",["115 - Adhemar de Barros","120 - Terminal Ouro Verde","136 - Terminal Central","163 - Jardim Campos Elíseos","164 - Parque Tropical","186 - Jardim Santa Maria / Semi Expressa","189 - Jardim Columbia","191 - Jardim Fernanda","194 - Jardim Itaguaçu","195 - Vila Palmeiras","214 - Terminal Itajaí / Semi Expressa","231 - Satélite Íris I","380 - Cambuí / Norte Sul","401 - Chácaras São Martinho","402 - Parque da Figueira / Swiss Park","404 - Jardim Maria Rosa","405 - Jardim Petrópolis","411 - Jardim do Lago II","412 - Parque Eldorado","414 - Parque Oziel","415 - Gleba B","422 - Jardim Nova América","429 - Swiss Park","430 - Swiss Park","431 - Reforma Agrária","432 - Saltinho","433 - Mora das Bandeiras","434 - Nossa Senhora de Lourdes","BRT10 - Terminal Ouro Verde","BRT11 - Terminal Vida Nova","BRT12 - Terminal Campos Elíseos"]]],
+"T03 - Terminal BRT Campo Grande":[["",["123 - Ter. Ouro Verde","200 - Jd Novo Maracanã","201 - Jd Santa Rosa","202 - Pq Valença II","203 - Campina Grande","204 - Pq Floresta","205 - Ter. Ouro Verde","206 - Santa Clara","207 - Jd Novo Mundo","208 - Jd Maracanã","209 - Chácara Cruzeiro do Sul","209.1 - Chácara Cruzeiro do Sul / Colina Verde","210 - Ter. Barão Geraldo","211 - Shopping Iguatemi","215 - Jd Bassoli","216 - Res. Colinas das Nascentes","217 - Res. São Luiz","218 - Ter. Itajaí - Semi Expressa","220 - Cambuí","BRT20 - Campo Grande (parador)","BRT21 - Campo Grande (Semi Expresso)"]]],
+"T07 - Terminal Barão Geraldo":[["",["134 - Ter. Ouro Verde","210 - Ter. Campo Grande","269 - Ter. Padre Anchieta","300 - Souzas","314 - Ter. Padre Anchieta","319 - Pq Cidade","320 - Real Parque II","321 - Centro Médico","322 - Village Campinas","323 - Vila Holândia","324 - Real Parque","325 - Vila Santa Izabel","328 - Cidade Judiciária","329 - Cidade Judiciária","329.1 - Cidade Judiciária","331 - Rodoviária","333 - Ter. Barão Geraldo","336 - Hospital das Clínicas","337 - Unicamp","338 - Shopping Iguatemi"]]],
+"T11 - Terminal Shopping Iguatemi":[["",["125 - Terminal Ouro Verde","211 - Terminal Campo Grande","249 - Jardim Flamboyant / Pq dos Eucaliptos","260 - Padre Anchieta","338 - Terminal Barão Geraldo","362 - Parque Brasília","381 - Shopping Dom Pedro","383 - Leroy Merlin via Planalto","383.1 - Leroy Merlin","384 - Entreverdes","385 - Terminal Metropolitano"]]],
+"T04 - Terminal Mercado":[
  ["Terminal Mercado",["241 - Vila Padre Manoel da Nóbrega","242 - Jardim Miranda","250 - Boa Vista","251 - Parque Fazendinha","252 - Parque São Jorge","254 - Terminal Padre Anchieta","255 - Parque Via Norte","256 - Parque Fazendinha Semi Expressa","257 - Parque São Jorge Semi Expressa","261 - Vila Reggio","263 - Vila Padre Anchieta","265 - Padre Anchieta","265.1 - Padre Anchieta","271 - Jardim Pacaembu","273 - Jardim Eulina","311 - Jardim Santa Mônica","312 - Vila Esperança","352 - Bairro Bananal","355 - Vila Gênesis","BRT10 - Terminal Ouro Verde","BRT11 - Terminal Vida Nova","BRT12 - Terminal Campos Elíseos","BRT20 - Terminal Campo Grande","BRT21 - Terminal Campo Grande (Semi-expressa)","BRT25 - Terminal Satélite Íris","BRT26 - Terminal Satélite Íris (Semi-expressa)"]],
  ["Terminal Mercado III",["171 - Campinas Shopping / Shopping Dom Pedro","173 - Jardim São Vicente / Parque Itália","240 - Jardim Garcia / Shopping Dom Pedro","244 - Vila Teixeira / Shopping Dom Pedro","249 - Jardim Flamboyant / Parque dos Eucaliptos","348 - Vila Marieta / Cidade Judiciária","377 - Vila Marieta / Shopping Dom Pedro","382 - Cambuí / Campinas Shopping"]],
  ["Corujão",["179 - Jardim São Domingos","199 - Vida Nova","289 - Itajaí IV","299 - Nova Aparecida","309 - Parque Cidade","339 - Cidade Universitária","399 - Joaquim Egídio","489 - Parque Jambeiro"]]],
-"Metropolitano":[["",["132 - Vida Nova","193 - Aeroporto de Viracopos","213 - Terminal Itajaí","331 - Terminal Barão Geraldo","332 - Hospital das Clínicas","349 - Vila Formosa","357 - PUCC I","362 - Shopping Iguatemi","366 - Vila Orozimbo Maia","385 - Shopping Iguatemi","386 - Cambuí","396 - Sousas","398 - Joaquim Egídio","408 - Parque Jambeiro","409 - Parque Jambeiro","502 - Circular Centro"]]],
-"Ouro Verde":[["",["101 - Parque Universitário / Terminal Ouro Verde","102 - Recanto do Sol / Terminal Ouro Verde","103 - Dic II e III","104 - Dic IV","105 - Cohab I","106 - Cohab II","107 - Jardim Melina","108 - Jardim Aeronave I","109 - Dic VI – Vila Aeroporto","110 - Adhemar de Barros","111 - Jardim Aeronave I","112 - Jardim Planalto I","113 - Jardim Planalto II","116 - Terminal Ouro Verde / Shopping Dom Pedro","118 - Terminal Ouro Verde / Cambuí","119 - Terminal Ouro Verde / Shopping Dom Pedro","120 - Terminal Ouro Verde / Terminal Central","121 - Terminal Ouro Verde / Corredor Central","122 - Terminal Vida Nova / Shopping Campinas via Terminal Ouro Verde","123 - Terminal Ouro Verde / Terminal Campo Grande","125 - Terminal Ouro Verde / Shopping Iguatemi","128 - Terminal Ouro Verde / Terminal Vida Nova (via São José, Res. Rosário, Jd. Marajó)","129 - Vila Park / Term. Ouro Verde","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana e feriados)","132 - Terminal Vida Nova / Rodoviária – via Terminal Ouro Verde","134 - Terminal Ouro Verde / Terminal Barão Geraldo","137 - Term. Vida Nova / Term. Ouro Verde","138 - Term. Ouro Verde / Recanto do Sol","180 - Terminal Ouro Verde / Jardim Santo Antônio","196 - Terminal Ouro Verde / Aeroporto de Viracopos (via Dic IV)","198 - Terminal Ouro Verde / Aeroporto de Viracopos","205 - Terminal Ouro Verde / Terminal Campo Grande","239 - Terminal Ouro Verde / PUCC II","BRT10 - Terminal Central"]]],
-"Padre Anchieta":[["",["254 - Parque Universal","260 - Nova Aparecida / Shopping Iguatemi","261 - Padre Anchieta","263 - Terminal Padre Anchieta","264 - Vila Padre Anchieta","265 - Padre Anchieta","266 - Parque São Jorge / Hospital das Clínicas","269 - Terminal Padre Anchieta / Terminal Barão Geraldo","314 - Terminal Padre Anchieta / Terminal Barão Geraldo"]]],
-"Shopping Dom Pedro":[["",["116 - Terminal Ouro Verde","119 - Terminal Ouro Verde","171 - Parque Industrial / Shopping Campinas","240 - Jardim Garcia","244 - Vila Teixeira","371 - Parque Prado","377 - Vila Marieta","381 - Shopping Iguatemi"]]],
-"Vida Nova":[["",["122 - Terminal Vida Nova / Shopping Campinas (via Terminal Ouro Verde)","126 - Vida Nova I e II","126.1 - Vida Nova I, II e Vila Vitória / Terminal Vida Nova","127 - Vila Vitória / Terminal Vida Nova","127.1 - Vila Vitória, Estrada Friburgo / Terminal Vida Nova","128 - Terminal Vida Nova / Terminal Ouro Verde (via Marajó, Res. São José, Res. Rosário)","129 - Terminal Vida Nova / Terminal Ouro Verde (via Res. Porto Seguro)","130 - Terminal Vida Nova / Terminal Central (Semi Expressa)","131 - Terminal Vida Nova / Corredor Central","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana)","132 - Terminal Vida Nova / Rodoviária (via Terminal Ouro Verde)","136 - Terminal Vida Nova / Rodoviária","137 - Term. Vida Nova / Term. Ouro Verde","BRT11 - Terminal Vida Nova"]]],
-"Vila União":[["",["140 - Terminal Vila União / Terminal Central","150 - Vila União I / Terminal Vila União","152 - Vila União III / Terminal Vila União","153 - Terminal Vila União / Rodoviária","154 - Terminal Vila União / Corredor Central","155 - Term. Vila União / Term. Campos Elíseos","156 - Term. Vila União / Term. Campos Elíseos","158 - Term. Vila União / Term. Santa Lúcia","163 - Terminal Central / Terminal Vila União","164 - Terminal Vila União / Terminal Central (via Parque Tropical)","166 - Term. Vila União / Term. Campos Elíseos","167 - Term. Vila União / Term. Campos Elíseos"]]],
-"Satélite Íris":[["",["226 - Residencial Sirius","227 - Jd. Florence II / Term. Sat. Íris","231 - Satélite Íris I","232 - Sat. Íris IV / Term. Satélite Íris","233 - Jd. Florence / Term. Satélite Íris","234 - Sat. Íris III / Term. Satélite Íris","235 - Residencial Sirius / Term. Satélite Íris","243 - Princesa D’Oeste","246 - Bela Aliança","BRT25 - Satélite Íris (Parador)","BRT26 - Satélite Íris (Semi Expressa)"]]],
-"Itajaí":[["",["212 - Corredor Central","213 - Rodoviária","214 - Ter. Central Semi Expressa","218 - Ter. Campo Grande Semi Expressa","219 - Ter. Itajaí / Circular Centro"]]],
-"Campos Elíseos":[["",["140 - Vila União","144 - Jd Capivari","155 - Ter. Vila União","156 - Ter. Vila União","165 - Jd Pauliceia","166 - Ter. Vila União","167 - Pq Tropical","BRT12 - Corredor Central","406 - Jd Maria Rosa"]]],
-"Santa Lúcia":[["",["143 - Jd Santa Terezinha","150 - Res. Vila União I","152 - Res. Vila União II","158 - Ter. Vila União","BRT12 - Corredor Central"]]]
+"T08 - Terminal Metropolitano":[["",["132 - Vida Nova","193 - Aeroporto de Viracopos","213 - Terminal Itajaí","331 - Terminal Barão Geraldo","332 - Hospital das Clínicas","349 - Vila Formosa","357 - PUCC I","362 - Shopping Iguatemi","366 - Vila Orozimbo Maia","385 - Shopping Iguatemi","386 - Cambuí","396 - Sousas","398 - Joaquim Egídio","408 - Parque Jambeiro","409 - Parque Jambeiro","502 - Circular Centro"]]],
+"T02 - Terminal Ouro Verde":[["",["101 - Parque Universitário / Terminal Ouro Verde","102 - Recanto do Sol / Terminal Ouro Verde","103 - Dic II e III","104 - Dic IV","105 - Cohab I","106 - Cohab II","107 - Jardim Melina","108 - Jardim Aeronave I","109 - Dic VI – Vila Aeroporto","110 - Adhemar de Barros","111 - Jardim Aeronave I","112 - Jardim Planalto I","113 - Jardim Planalto II","116 - Terminal Ouro Verde / Shopping Dom Pedro","118 - Terminal Ouro Verde / Cambuí","119 - Terminal Ouro Verde / Shopping Dom Pedro","120 - Terminal Ouro Verde / Terminal Central","121 - Terminal Ouro Verde / Corredor Central","122 - Terminal Vida Nova / Shopping Campinas via Terminal Ouro Verde","123 - Terminal Ouro Verde / Terminal Campo Grande","125 - Terminal Ouro Verde / Shopping Iguatemi","128 - Terminal Ouro Verde / Terminal Vida Nova (via São José, Res. Rosário, Jd. Marajó)","129 - Vila Park / Term. Ouro Verde","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana e feriados)","132 - Terminal Vida Nova / Rodoviária – via Terminal Ouro Verde","134 - Terminal Ouro Verde / Terminal Barão Geraldo","137 - Term. Vida Nova / Term. Ouro Verde","138 - Term. Ouro Verde / Recanto do Sol","180 - Terminal Ouro Verde / Jardim Santo Antônio","196 - Terminal Ouro Verde / Aeroporto de Viracopos (via Dic IV)","198 - Terminal Ouro Verde / Aeroporto de Viracopos","205 - Terminal Ouro Verde / Terminal Campo Grande","239 - Terminal Ouro Verde / PUCC II","BRT10 - Terminal Central"]]],
+"T05 - Terminal Padre Anchieta":[["",["254 - Parque Universal","260 - Nova Aparecida / Shopping Iguatemi","261 - Padre Anchieta","263 - Terminal Padre Anchieta","264 - Vila Padre Anchieta","265 - Padre Anchieta","266 - Parque São Jorge / Hospital das Clínicas","269 - Terminal Padre Anchieta / Terminal Barão Geraldo","314 - Terminal Padre Anchieta / Terminal Barão Geraldo"]]],
+"T12 - Terminal Shopping Dom Pedro":[["",["116 - Terminal Ouro Verde","119 - Terminal Ouro Verde","171 - Parque Industrial / Shopping Campinas","240 - Jardim Garcia","244 - Vila Teixeira","371 - Parque Prado","377 - Vila Marieta","381 - Shopping Iguatemi"]]],
+"T06 - Terminal Vida Nova":[["",["122 - Terminal Vida Nova / Shopping Campinas (via Terminal Ouro Verde)","126 - Vida Nova I e II","126.1 - Vida Nova I, II e Vila Vitória / Terminal Vida Nova","127 - Vila Vitória / Terminal Vida Nova","127.1 - Vila Vitória, Estrada Friburgo / Terminal Vida Nova","128 - Terminal Vida Nova / Terminal Ouro Verde (via Marajó, Res. São José, Res. Rosário)","129 - Terminal Vida Nova / Terminal Ouro Verde (via Res. Porto Seguro)","130 - Terminal Vida Nova / Terminal Central (Semi Expressa)","131 - Terminal Vida Nova / Corredor Central","131.1 - Terminal Vida Nova / Corredor Central (via Terminal Ouro Verde aos fins de semana)","132 - Terminal Vida Nova / Rodoviária (via Terminal Ouro Verde)","136 - Terminal Vida Nova / Rodoviária","137 - Term. Vida Nova / Term. Ouro Verde","BRT11 - Terminal Vida Nova"]]],
+"T10 - Terminal Vila União":[["",["140 - Terminal Vila União / Terminal Central","150 - Vila União I / Terminal Vila União","152 - Vila União III / Terminal Vila União","153 - Terminal Vila União / Rodoviária","154 - Terminal Vila União / Corredor Central","155 - Term. Vila União / Term. Campos Elíseos","156 - Term. Vila União / Term. Campos Elíseos","158 - Term. Vila União / Term. Santa Lúcia","163 - Terminal Central / Terminal Vila União","164 - Terminal Vila União / Terminal Central (via Parque Tropical)","166 - Term. Vila União / Term. Campos Elíseos","167 - Term. Vila União / Term. Campos Elíseos"]]],
+"T15 - Terminal Satélite Íris":[["",["226 - Residencial Sirius","227 - Jd. Florence II / Term. Sat. Íris","231 - Satélite Íris I","232 - Sat. Íris IV / Term. Satélite Íris","233 - Jd. Florence / Term. Satélite Íris","234 - Sat. Íris III / Term. Satélite Íris","235 - Residencial Sirius / Term. Satélite Íris","243 - Princesa D’Oeste","246 - Bela Aliança","BRT25 - Satélite Íris (Parador)","BRT26 - Satélite Íris (Semi Expressa)"]]],
+"T09 - Terminal Itajaí":[["",["212 - Corredor Central","213 - Rodoviária","214 - Ter. Central Semi Expressa","218 - Ter. Campo Grande Semi Expressa","219 - Ter. Itajaí / Circular Centro"]]],
+"T13 - Terminal Campos Elíseos":[["",["140 - Vila União","144 - Jd Capivari","155 - Ter. Vila União","156 - Ter. Vila União","165 - Jd Pauliceia","166 - Ter. Vila União","167 - Pq Tropical","BRT12 - Corredor Central","406 - Jd Maria Rosa"]]],
+"T14 - Terminal Santa Lúcia":[["",["143 - Jd Santa Terezinha","150 - Res. Vila União I","152 - Res. Vila União II","158 - Ter. Vila União","BRT12 - Corredor Central"]]]
 };
 
 /* Tipos de campo: text, num, date, time, select, radio, checks, area, linha (lista do terminal com texto livre), linhaSel (lista obrigatória do terminal) */
@@ -387,6 +419,8 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const hoje=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
 const fmtData=s=>s&&/^\d{4}-\d{2}-\d{2}$/.test(s)?s.split("-").reverse().join("/"):(s||"");
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let sessao=store.get("sessao");
+if(sessao&&!sessao.matricula)sessao=null;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
 /* ---------- Plantão ---------- */
@@ -395,7 +429,7 @@ $("#c-tempo").innerHTML=TEMPO.map(t=>`<label class="chip"><input type="radio" na
 /* O plantão vive só enquanto o app está aberto: matrícula e tempo não ficam guardados no aparelho. Só o terminal é lembrado. */
 try{localStorage.removeItem("plantao");localStorage.removeItem("plantaoConfirmado")}catch(e){}
 let plantaoAberto=false, plantaoAbertoEm=null;
-const termAparelho=store.get("terminalAparelho");
+const termAparelho=NOME_ANTIGO[store.get("terminalAparelho")]||store.get("terminalAparelho");
 if(termAparelho&&TERMINAIS.includes(termAparelho))$("#c-terminal").value=termAparelho;
 const DIAS=["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
 const fmtDia=d=>String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();
@@ -412,9 +446,9 @@ function salvarPlantao(){const t=$("#c-terminal").value;if(t)store.set("terminal
 $("#c-terminal").addEventListener("change",()=>{salvarPlantao();renderForm(true)});
 function plantaoCompleto(p){return p.matricula&&/^\d+$/.test(p.matricula)&&p.terminal&&p.tempo}
 function mostrarResumo(sim){
-  const p=lerPlantao();plantaoAberto=sim;$("#btn-sair").hidden=!sim;
+  const p=lerPlantao();plantaoAberto=sim;$("#btn-sair").hidden=!sessao;
   $("#plantao-resumo").hidden=!sim;$("#plantao-edit").hidden=sim;
-  if(sim){const d=new Date();$("#resumo-dados").innerHTML=blocoDados([["Data",fmtDia(d)],["Dia da semana",DIAS[d.getDay()]],["Matrícula",p.matricula],["Terminal",p.terminal],["Tempo",p.tempo]])}
+  if(sim){const d=new Date();$("#resumo-dados").innerHTML=blocoDados([["Data",fmtDia(d)],["Dia da semana",DIAS[d.getDay()]],["Matrícula",p.matricula+(sessao&&sessao.nome?" · "+sessao.nome:"")],["Terminal",p.terminal],["Tempo",p.tempo]])}
 }
 $("#btn-confirmar-plantao").addEventListener("click",()=>{
   const p=lerPlantao(),st=$("#plantao-status");st.className="status";
@@ -422,14 +456,15 @@ $("#btn-confirmar-plantao").addEventListener("click",()=>{
   if(!plantaoAbertoEm)plantaoAbertoEm=Date.now();
   st.textContent="";salvarPlantao();mostrarResumo(true);
 });
-$("#btn-alterar-plantao").addEventListener("click",()=>{mostrarResumo(false);$("#c-matricula").focus()});
+$("#btn-alterar-plantao").addEventListener("click",()=>{mostrarResumo(false);$("#c-terminal").focus()});
 $("#btn-sair").addEventListener("click",()=>{
-  if(!confirm("Sair e encerrar o plantão? Quem for render terá que abrir com a própria matrícula."))return;
+  if(!confirm("Sair e encerrar o plantão? Quem for render entra com o próprio login e senha."))return;
   $("#c-matricula").value="";document.querySelectorAll('input[name="c-tempo"]').forEach(r=>r.checked=false);
-  plantaoAbertoEm=null;mostrarResumo(false);renderForm();
+  plantaoAbertoEm=null;sessao=null;try{localStorage.removeItem("sessao")}catch(e){}
+  mostrarResumo(false);renderForm();
   if(location.hash&&location.hash!=="#registrar")location.hash="#registrar";
-  window.scrollTo(0,0);$("#c-matricula").focus();
-  const st=$("#plantao-status");st.className="status ok";st.textContent="Plantão encerrado. Pronto para a próxima rendição.";
+  window.scrollTo(0,0);rota();
+  const st=$("#l-status");st.className="status ok";st.textContent="Plantão encerrado. Pronto para a próxima rendição.";
 });
 
 /* ---------- Letreiro ---------- */
@@ -438,11 +473,11 @@ $("#letreiro").innerHTML=ORDEM.map(k=>`<button type="button" data-k="${k}" aria-
 $("#letreiro").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tipoAtual=b.dataset.k;store.set("tipo",tipoAtual);renderForm()});
 
 /* ---------- Formulário ---------- */
-LINHAS["BRT Mercado"]=LINHAS["Mercado"];
+
 function opcoesLinha(terminal){
   const op=ls=>ls.map(l=>`<option>${esc(l)}</option>`).join(""), og=(lab,ls)=>`<optgroup label="${esc(lab)}">${op(ls)}</optgroup>`;
   if(terminal&&LINHAS[terminal])return LINHAS[terminal].map(([n,ls])=>n?og(n,ls):op(ls)).join("");
-  return Object.keys(LINHAS).filter(t=>!(t==="BRT Mercado"&&LINHAS[t]===LINHAS["Mercado"])).map(t=>LINHAS[t].map(([n,ls])=>og(n?(n==="Corujão"?"Corujão – Mercado":n):"Terminal "+t,ls)).join("")).join("");
+  return [...TERMINAIS.filter(t=>LINHAS[t]),...Object.keys(LINHAS).filter(t=>!TERMINAIS.includes(t))].map(t=>LINHAS[t].map(([n,ls])=>og(n?(n==="Corujão"?"Corujão – Mercado":n):t,ls)).join("")).join("");
 }
 function campoHTML(f){
   const id="f-"+f.k, lab=`<span class="${f.r?"req":""}">${esc(f.l)}</span>`, cls=f.full||f.t==="checks"||f.t==="area"||f.t==="radio"&&f.o.length>2?"full":"";
@@ -537,6 +572,7 @@ function atualizarStatus(){
   const b=$("#sync");if(!b)return;b.className="sync";
   const n=fila.length,pend=n===1?"1 aguardando envio":n+" aguardando envio";
   if(!API_OK){b.textContent=n?"Planilha não conectada · "+pend:"Planilha não conectada";b.classList.add("off");return}
+  if(sessao&&!sessao.token){b.textContent=n?"Entre de novo com internet · "+pend:"Entre de novo com internet";b.classList.add("off");return}
   if(sincronizando){b.textContent="Enviando…";b.classList.add("run");return}
   if(!navigator.onLine){b.textContent=n?"Sem internet · "+pend:"Sem internet";b.classList.add(n?"pend":"off");return}
   if(erroSync){b.textContent=n?"Falha no envio · "+pend:"Falha ao atualizar";b.classList.add("off");b.title=erroSync+" (toque para tentar de novo)";return}
@@ -549,21 +585,21 @@ async function api(acao,corpo){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
   try{
     const r=await fetch(API_URL,{method:"POST",body:JSON.stringify({acao,...corpo}),signal:ctl.signal,redirect:"follow"});
-    const d=await r.json();if(!d.ok)throw new Error(d.erro||"Erro na planilha.");return d;
+    const d=await r.json();if(!d.ok){const er=new Error(d.erro||"Erro na planilha.");er.servidor=true;throw er}return d;
   }finally{clearTimeout(t)}
 }
 async function baixarTudo(){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
-  try{const r=await fetch(API_URL+"?acao=listar&t="+Date.now(),{signal:ctl.signal,redirect:"follow"});const d=await r.json();if(!d.ok)throw new Error(d.erro||"Erro na planilha.");return d}
+  try{const r=await fetch(API_URL+"?acao=listar&tk="+encodeURIComponent(sessao&&sessao.token||"")+"&t="+Date.now(),{signal:ctl.signal,redirect:"follow"});const d=await r.json();if(!d.ok)throw new Error(d.erro||"Erro na planilha.");return d}
   finally{clearTimeout(t)}
 }
 const msgErro=e=>!navigator.onLine?"Sem internet. Tente quando o sinal voltar.":(e&&e.name==="AbortError"?"A planilha demorou a responder. Tente de novo.":(e&&e.message)||"Não foi possível concluir.");
 async function sincronizar(){
-  if(sincronizando||!API_OK||!navigator.onLine){atualizarStatus();return}
+  if(sincronizando||!API_OK||!navigator.onLine||!sessao||!sessao.token){atualizarStatus();return}
   sincronizando=true;atualizarStatus();
   try{
     while(fila.length){
-      const lote=fila.slice(0,40),r=await api("registrar",{registros:lote}),ok=new Set(r.ids);
+      const lote=fila.slice(0,40),r=await api("registrar",{registros:lote,tk:sessao.token}),ok=new Set(r.ids);
       const enviados=lote.filter(x=>ok.has(x.id));
       servidor=[...enviados,...servidor.filter(x=>!ok.has(x.id))];
       fila=fila.filter(x=>!ok.has(x.id));await banco.set("fila",fila);
@@ -760,8 +796,106 @@ $("#btn-csv").addEventListener("click",async()=>{
   st.textContent="Planilha baixada.";st.classList.add("ok");
 });
 
+/* ---------- Login dos agentes ---------- */
+/* Login = 00 + matrícula. Primeiro acesso: senha = 00 + matrícula e troca obrigatória (6 letras ou números).
+   Depois do primeiro login com internet, o aparelho guarda um resumo da senha para entrar também sem internet. */
+const credenciais=()=>store.get("cred")||{};
+function guardarCred(login,d){const c=credenciais();c[login]={matricula:d.matricula,nome:d.nome||"",salt:d.salt,hash:d.hash,token:d.token};store.set("cred",c)}
+async function resumoLocal(salt,senha){
+  let h=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+senha));
+  for(let i=1;i<2000;i++)h=await crypto.subtle.digest("SHA-256",h);
+  return[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+let trocaLogin="",trocaAtual="",trocaObrigatoria=false;
+function mostrarLogin(){$("#login-form").hidden=!!trocaLogin&&trocaObrigatoria;$("#troca-form").hidden=!trocaLogin}
+function iniciarSessao(login,d){
+  sessao={login,matricula:d.matricula,nome:d.nome||"",token:d.token||null};store.set("sessao",sessao);
+  trocaLogin="";trocaAtual="";$("#l-senha").value="";$("#l-status").textContent="";
+  $("#c-matricula").value=sessao.matricula;mostrarResumo(false);
+  if(location.hash&&location.hash!=="#registrar")location.hash="#registrar";
+  rota();renderLista();renderEstat();sincronizar();$("#c-terminal").focus();
+}
+function abrirTroca(login,atual,obrigatoria){
+  trocaLogin=login;trocaAtual=atual||"";trocaObrigatoria=obrigatoria;
+  $("#h-troca").textContent=obrigatoria?"Primeiro acesso: crie sua senha":"Trocar minha senha";
+  $("#t-atual-box").hidden=obrigatoria;$("#t-cancelar").hidden=obrigatoria;
+  ["#t-atual","#t-nova","#t-repete"].forEach(s=>$(s).value="");$("#t-status").textContent="";
+  if(!obrigatoria){for(const v of ["registrar","registros","estatisticas","admin"])$("#view-"+v).hidden=true;$("#view-login").hidden=false}
+  mostrarLogin();(obrigatoria?$("#t-nova"):$("#t-atual")).focus();
+}
+$("#l-entrar").addEventListener("click",async()=>{
+  const st=$("#l-status"),login=$("#l-login").value.trim(),senha=$("#l-senha").value;st.className="status";
+  if(!/^00\d+$/.test(login)){st.textContent="O login é 00 seguido da sua matrícula, só números.";st.classList.add("err");return}
+  if(!senha){st.textContent="Digite a senha.";st.classList.add("err");return}
+  if(!API_OK){
+    if(senha!==login){st.textContent="Enquanto a planilha não estiver conectada, a senha é 00 + matrícula.";st.classList.add("err");return}
+    iniciarSessao(login,{matricula:login.slice(2)});return;
+  }
+  const btn=$("#l-entrar");btn.disabled=true;st.textContent="Verificando…";
+  try{
+    if(!navigator.onLine)throw Object.assign(new Error("offline"),{rede:true});
+    const d=await api("login",{login,senha});
+    if(d.primeiroAcesso){st.textContent="";abrirTroca(login,senha,true);return}
+    guardarCred(login,d);iniciarSessao(login,d);
+  }catch(e){
+    if(e.servidor){st.textContent=e.message;st.classList.add("err");return}
+    const c=credenciais()[login];
+    if(c&&c.hash&&await resumoLocal(c.salt,senha)===c.hash){iniciarSessao(login,c);return}
+    st.textContent=c?"Senha incorreta.":"Sem internet. O primeiro acesso neste aparelho precisa de internet.";st.classList.add("err");
+  }finally{btn.disabled=false}
+});
+$("#l-senha").addEventListener("keydown",e=>{if(e.key==="Enter")$("#l-entrar").click()});
+$("#l-login").addEventListener("keydown",e=>{if(e.key==="Enter")$("#l-senha").focus()});
+$("#btn-trocar-senha").addEventListener("click",()=>{if(sessao)abrirTroca(sessao.login,"",false)});
+$("#t-cancelar").addEventListener("click",()=>{trocaLogin="";$("#troca-form").hidden=true;rota()});
+$("#t-salvar").addEventListener("click",async()=>{
+  const st=$("#t-status"),atual=trocaObrigatoria?trocaAtual:$("#t-atual").value,nova=$("#t-nova").value,rep=$("#t-repete").value;st.className="status";
+  if(!trocaObrigatoria&&!atual){st.textContent="Digite a senha atual.";st.classList.add("err");return}
+  if(!/^[A-Za-z0-9]{6}$/.test(nova)){st.textContent="A nova senha deve ter exatamente 6 letras ou números, sem espaços nem símbolos.";st.classList.add("err");return}
+  if(nova!==rep){st.textContent="As duas senhas não são iguais.";st.classList.add("err");return}
+  if(nova===trocaLogin){st.textContent="Escolha uma senha diferente da inicial.";st.classList.add("err");return}
+  if(!API_OK){st.textContent="A troca de senha funciona quando a planilha estiver conectada.";st.classList.add("err");return}
+  const btn=$("#t-salvar");btn.disabled=true;st.textContent="Salvando…";
+  try{const d=await api("trocarSenha",{login:trocaLogin,senhaAtual:atual,novaSenha:nova});guardarCred(trocaLogin,d);iniciarSessao(trocaLogin,d);
+    const ps=$("#plantao-status");ps.className="status ok";ps.textContent="Senha salva. Use a nova senha nos próximos acessos."}
+  catch(e){st.textContent=msgErro(e);st.classList.add("err")}
+  finally{btn.disabled=false}
+});
+
+/* ---------- Agentes (administrador) ---------- */
+$("#ag-carregar").addEventListener("click",async()=>{
+  const st=$("#ag-info");st.className="status";st.textContent="Carregando…";
+  try{const d=await api("listarAgentes",{chave:chaveAdmin});mostrarAgentes(d.agentes)}catch(e){st.textContent=msgErro(e);st.classList.add("err")}
+});
+function mostrarAgentes(ag){
+  $("#ag-lista").value=ag.map(a=>a.matricula+(a.nome?" - "+a.nome:"")).join("\n");
+  const n=ag.length,t=ag.filter(a=>a.senhaAlterada).length,st=$("#ag-info");st.className="status ok";
+  st.textContent=`${n} ${n===1?"agente":"agentes"} · ${t} já ${t===1?"criou":"criaram"} senha própria`;
+}
+$("#ag-salvar").addEventListener("click",async()=>{
+  const st=$("#ag-status");st.className="status";
+  const ag=$("#ag-lista").value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const m=/^0*(\d+)\s*(?:[-–]\s*(.*))?$/.exec(l);return m?{matricula:m[1],nome:(m[2]||"").trim()}:null});
+  const ruins=ag.filter(x=>!x).length;
+  if(ruins){st.textContent=ruins+" linha(s) sem matrícula válida. Use: 12345 - Nome";st.classList.add("err");return}
+  if(!ag.length&&!confirm("A lista está vazia: ninguém conseguirá entrar. Continuar?"))return;
+  st.textContent="Salvando…";
+  try{const d=await api("salvarAgentes",{chave:chaveAdmin,agentes:ag});mostrarAgentes(d.agentes);st.textContent="Lista salva. As senhas já criadas foram mantidas.";st.classList.add("ok")}
+  catch(e){st.textContent=msgErro(e);st.classList.add("err")}
+});
+$("#ag-reset").addEventListener("click",async()=>{
+  const st=$("#ag-reset-status"),m=$("#ag-reset-mat").value.trim();st.className="status";
+  if(!/^\d+$/.test(m)){st.textContent="Digite a matrícula, só números.";st.classList.add("err");return}
+  if(!confirm(`Voltar a senha da matrícula ${m} para a inicial (00${m})?`))return;
+  try{await api("redefinirSenha",{chave:chaveAdmin,matricula:m});st.textContent=`Pronto: a matrícula ${m} entra de novo com 00${m} e cria uma senha nova.`;st.classList.add("ok");$("#ag-reset-mat").value=""}
+  catch(e){st.textContent=msgErro(e);st.classList.add("err")}
+});
+
 /* ---------- Navegação ---------- */
 function rota(){
+  const fora=!sessao;
+  $("#view-login").hidden=!fora;document.querySelector(".tabs").hidden=fora;$("#sync").hidden=fora;$("#btn-sair").hidden=fora;
+  if(fora){for(const v of ["registrar","registros","estatisticas","admin"])$("#view-"+v).hidden=true;mostrarLogin();return}
+  $("#view-login").hidden=true;
   const h=location.hash.slice(1), r=["registros","estatisticas","admin"].includes(h)?h:"registrar";
   for(const v of ["registrar","registros","estatisticas","admin"]){
     $("#view-"+v).hidden=r!==v;
@@ -835,6 +969,7 @@ function renderEstat(){
 window.addEventListener("hashchange",rota);
 
 /* ---------- Início ---------- */
+if(sessao)$("#c-matricula").value=sessao.matricula;
 renderForm(); rota(); renderLista();
 (async()=>{
   const [srv,fl,cad]=await Promise.all([banco.get("servidor"),banco.get("fila"),banco.get("cadastros")]);
